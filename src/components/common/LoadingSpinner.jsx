@@ -1,17 +1,32 @@
-import React from 'react';
-import { TruckIcon } from '@heroicons/react/24/solid';
+import React from "react";
+import { Spin, Typography } from "antd";
+import { TruckOutlined } from "@ant-design/icons";
 
-const LoadingSpinner = ({ message = 'Loading...' }) => {
+const { Text } = Typography;
+
+const LoadingSpinner = ({ message = "Loading...", size = "large" }) => {
+  const antIcon = <TruckOutlined style={{ fontSize: 24 }} spin />;
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="flex flex-col items-center space-y-4">
-        <div className="relative">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <TruckIcon className="h-6 w-6 text-primary-600" />
-          </div>
-        </div>
-        <p className="text-gray-600 text-sm">{message}</p>
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#f5f5f5",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "16px",
+        }}
+      >
+        <Spin indicator={antIcon} size={size} />
+        <Text type="secondary">{message}</Text>
       </div>
     </div>
   );

@@ -1,33 +1,335 @@
-import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
-import Sidebar from './Sidebar';
-import Header from './Header';
-// import MobileSidebar from './MobileSidebar';
+import React, { useState, useEffect } from "react";
+import { Outlet, useLocation, Link } from "react-router-dom";
+import {
+  Layout,
+  Menu,
+  Breadcrumb,
+  Avatar,
+  Dropdown,
+  Button,
+  Typography,
+  Tag,
+  Space,
+  Select,
+  theme,
+} from "antd";
+import {
+  DashboardOutlined,
+  TruckOutlined,
+  TeamOutlined,
+  UserOutlined,
+  SettingOutlined,
+  LogoutOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  DatabaseOutlined,
+  ContainerOutlined,
+  FileTextOutlined,
+  UsergroupAddOutlined,
+  SafetyOutlined,
+  BarChartOutlined,
+  SwapOutlined,
+} from "@ant-design/icons";
+import { useAuth } from "../../contexts/AuthContext";
+
+const { Header, Sider, Content, Footer } = Layout;
+const { Title, Text } = Typography;
+const { Option } = Select;
 
 const MainLayout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [availableRoles, setAvailableRoles] = useState([]);
+  const {
+    token: { colorBgContainer, borderRadiusLG },
+  } = theme.useToken();
+  const { user, activeRole, logout, switchRole, getAvailableRoles } = useAuth();
+  const location = useLocation();
+
+  // Fetch available roles when component mounts
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const rolesData = await getAvailableRoles();
+        setAvailableRoles(rolesData.roles || []);
+      } catch (error) {
+        console.error("Failed to fetch roles:", error);
+      }
+    };
+
+    if (user) {
+      fetchRoles();
+    }
+  }, [user, getAvailableRoles]);
+
+  console.log("###", availableRoles, activeRole);
+  // Get menu items based on role
+  const getMenuItems = (activeRole) => {
+    const baseItems = [
+      {
+        key: "dashboard",
+        icon: <DashboardOutlined />,
+        label: <Link to="/dashboard">Dashboard</Link>,
+      },
+    ];
+
+    const roleItems = {
+      ADMIN: [
+        ...baseItems,
+        {
+          key: "bookings",
+          icon: <TruckOutlined />,
+          label: <Link to="/bookings">Bookings</Link>,
+        },
+        {
+          key: "customers",
+          icon: <TeamOutlined />,
+          label: <Link to="/customers">Customers</Link>,
+        },
+        {
+          key: "ports",
+          icon: <DatabaseOutlined />,
+          label: <Link to="/ports">Ports</Link>,
+        },
+        {
+          key: "depots",
+          icon: <ContainerOutlined />,
+          label: <Link to="/depots">Depots</Link>,
+        },
+        {
+          key: "admin",
+          icon: <SafetyOutlined />,
+          label: "Administration",
+          children: [
+            {
+              key: "users",
+              icon: <UserOutlined />,
+              label: <Link to="/users">User Management</Link>,
+            },
+            {
+              key: "roles",
+              icon: <UsergroupAddOutlined />,
+              label: <Link to="/roles">Role Management</Link>,
+            },
+            {
+              key: "activity-logs",
+              icon: <FileTextOutlined />,
+              label: <Link to="/activity-logs">Activity Logs</Link>,
+            },
+          ],
+        },
+        {
+          key: "settings",
+          icon: <SettingOutlined />,
+          label: <Link to="/settings">Settings</Link>,
+        },
+      ],
+      CUSTOMER: [
+        ...baseItems,
+        {
+          key: "bookings",
+          icon: <TruckOutlined />,
+          label: <Link to="/bookings">My Bookings</Link>,
+        },
+      ],
+      SALES: [
+        ...baseItems,
+        {
+          key: "bookings",
+          icon: <TruckOutlined />,
+          label: <Link to="/bookings">Bookings</Link>,
+        },
+        {
+          key: "customers",
+          icon: <TeamOutlined />,
+          label: <Link to="/customers">Customers</Link>,
+        },
+        {
+          key: "reports",
+          icon: <BarChartOutlined />,
+          label: <Link to="/reports">Reports</Link>,
+        },
+      ],
+    };
+
+    return roleItems[activeRole] || baseItems;
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
+  const handleRoleSwitch = async (roleName) => {
+    try {
+      await switchRole(roleName);
+      // Refresh available roles after switching
+      const rolesData = await getAvailableRoles();
+      setAvailableRoles(rolesData.roles || []);
+    } catch (error) {
+      console.error("Role switch failed:", error);
+    }
+  };
+
+  const userMenuItems = [
+    {
+      key: "profile",
+      icon: <UserOutlined />,
+      label: "Profile",
+    },
+    {
+      key: "settings",
+      icon: <SettingOutlined />,
+      label: "Settings",
+    },
+    {
+      type: "divider",
+    },
+    {
+      key: "logout",
+      icon: <LogoutOutlined />,
+      label: "Logout",
+      onClick: handleLogout,
+    },
+  ];
+
+  const getSelectedKey = () => {
+    const path = location.pathname.split("/")[1];
+    return path || "dashboard";
+  };
+
+  // Generate breadcrumb items based on current route
+  const getBreadcrumbItems = () => {
+    const pathSegments = location.pathname.split("/").filter(Boolean);
+    const breadcrumbItems = [{ title: "Home", href: "/dashboard" }];
+
+    if (pathSegments.length > 0) {
+      pathSegments.forEach((segment, index) => {
+        const title = segment.charAt(0).toUpperCase() + segment.slice(1);
+        const href = "/" + pathSegments.slice(0, index + 1).join("/");
+        breadcrumbItems.push({ title, href });
+      });
+    }
+
+    return breadcrumbItems;
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Mobile sidebar */}
-      {/* <MobileSidebar open={sidebarOpen} setOpen={setSidebarOpen} /> */}
-      
-      {/* Desktop sidebar */}
-      <Sidebar />
-      
-      {/* Main content area */}
-      <div className="lg:pl-72">
-        {/* Header */}
-        <Header setSidebarOpen={setSidebarOpen} />
-        
-        {/* Page content */}
-        <main className="py-6">
-          <div className="px-4 sm:px-6 lg:px-8">
-            <Outlet />
+    <Layout style={{ minHeight: "100vh" }}>
+      <Sider trigger={null} collapsible collapsed={collapsed}>
+        <div
+          style={{
+            height: 64,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderBottom: "1px solid #303030",
+          }}
+        >
+          <Title level={4} style={{ color: "#fff", margin: 0 }}>
+            {collapsed
+              ? user.tenant?.name[0].toUpperCase() || "N"
+              : user.tenant?.name || "NVOCC"}
+          </Title>
+        </div>
+
+        {activeRole && (
+          <div style={{ padding: "16px", borderBottom: "1px solid #303030" }}>
+            <Tag color="blue" style={{ width: "100%", textAlign: "center" }}>
+              {collapsed
+                ? activeRole.charAt(0)
+                : availableRoles.find((role) => role.name === activeRole)
+                    ?.displayName || activeRole.replace("_", " ")}
+            </Tag>
           </div>
-        </main>
-      </div>
-    </div>
+        )}
+
+        <Menu
+          theme="dark"
+          mode="inline"
+          defaultSelectedKeys={["dashboard"]}
+          selectedKeys={[getSelectedKey()]}
+          items={getMenuItems(activeRole)}
+        />
+      </Sider>
+
+      <Layout>
+        <Header style={{ padding: 0, background: colorBgContainer }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              height: "100%",
+              paddingRight: "24px",
+            }}
+          >
+            <Button
+              type="text"
+              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              onClick={() => setCollapsed(!collapsed)}
+              style={{
+                fontSize: "16px",
+                width: 64,
+                height: 64,
+              }}
+            />
+
+            <Space size="large">
+              {/* Role Switcher */}
+              {availableRoles.length > 1 && (
+                <Space>
+                  <SwapOutlined />
+                  <Select
+                    value={activeRole}
+                    onChange={handleRoleSwitch}
+                    style={{ minWidth: 140 }}
+                    size="small"
+                    bordered={false}
+                    placeholder="Switch Role"
+                  >
+                    {availableRoles.map((role) => (
+                      <Option key={role.name} value={role.name}>
+                        {role.displayName}
+                      </Option>
+                    ))}
+                  </Select>
+                </Space>
+              )}
+
+              <Dropdown
+                menu={{ items: userMenuItems }}
+                placement="bottomRight"
+                arrow={{ pointAtCenter: true }}
+              >
+                <Space style={{ cursor: "pointer", padding: "8px" }}>
+                  <Avatar icon={<UserOutlined />} />
+                  <Text>{user?.name || "User"}</Text>
+                </Space>
+              </Dropdown>
+            </Space>
+          </div>
+        </Header>
+        <Layout style={{ padding: "0 24px 24px" }}>
+          <Breadcrumb
+            items={getBreadcrumbItems()}
+            style={{ margin: "16px 0" }}
+          />
+          <Content
+            style={{
+              padding: 24,
+              minHeight: 280,
+              background: colorBgContainer,
+              borderRadius: borderRadiusLG,
+            }}
+          >
+            <Outlet />
+          </Content>
+        </Layout>
+      </Layout>
+    </Layout>
   );
 };
 
