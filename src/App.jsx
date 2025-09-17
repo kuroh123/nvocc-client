@@ -12,9 +12,11 @@ import MainLayout from "./components/layout/MainLayout";
 import Dashboard from "./pages/Dashboard";
 import Bookings from "./pages/Bookings";
 import Customers from "./pages/Customers";
+import Ports from "./pages/Ports";
 import { ConfigProvider } from "antd";
 import { Result, Button } from "antd";
 import "./App.css";
+import Terminals from "./pages/Terminals";
 
 // Ant Design theme configuration
 const theme = {
@@ -58,20 +60,22 @@ function App() {
                 <Route path="bookings" element={<Bookings />} />
                 <Route path="customers" element={<Customers />} />
 
-                {/* Placeholder routes for other pages */}
+                {/* Ports Management */}
                 <Route
                   path="ports"
                   element={
-                    <Result
-                      status="info"
-                      title="Ports Management"
-                      subTitle="This page is under development."
-                      extra={
-                        <Button type="primary" href="/dashboard">
-                          Go to Dashboard
-                        </Button>
-                      }
-                    />
+                    <ProtectedRoute requirePermission="ports:read">
+                      <Ports />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="terminals"
+                  element={
+                    <ProtectedRoute requirePermission="terminals:read">
+                      <Terminals />
+                    </ProtectedRoute>
                   }
                 />
 

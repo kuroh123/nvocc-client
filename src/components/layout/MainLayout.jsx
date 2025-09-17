@@ -91,6 +91,11 @@ const MainLayout = () => {
           label: <Link to="/ports">Ports</Link>,
         },
         {
+          key: "terminals",
+          icon: <DatabaseOutlined />,
+          label: <Link to="/terminals">Terminals</Link>,
+        },
+        {
           key: "depots",
           icon: <ContainerOutlined />,
           label: <Link to="/depots">Depots</Link>,
