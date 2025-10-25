@@ -23,36 +23,36 @@ import {
   EyeOutlined,
   EditOutlined,
   DeleteOutlined,
-  ContainerOutlined,
+  ToolOutlined,
   GlobalOutlined,
   FilterOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
 import FormModal from "../components/common/FormModal";
-import TerminalForm from "../components/forms/terminalForm";
-import terminalService from "../services/terminalService";
+import OperatorForm from "../components/forms/OperatorForm";
+import operatorService from "../services/operatorService";
 import portService from "../services/portService";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
 const { Option } = Select;
 
-const Terminals = () => {
+const Operators = () => {
   const { hasPermission, hasRole, activeRole } = useAuth();
 
-  // Check if user can perform terminal operations based on roles
-  const canCreateTerminal =
-    hasPermission("terminals:create") ||
+  // Check if user can perform operator operations based on roles
+  const canCreateOperator =
+    hasPermission("operators:create") ||
     ["ADMIN", "PORT", "MASTER_PORT"].includes(activeRole);
-  const canEditTerminal =
-    hasPermission("terminals:update") ||
+  const canEditOperator =
+    hasPermission("operators:update") ||
     ["ADMIN", "PORT", "MASTER_PORT"].includes(activeRole);
-  const canDeleteTerminal =
-    hasPermission("terminals:delete") ||
+  const canDeleteOperator =
+    hasPermission("operators:delete") ||
     ["ADMIN", "MASTER_PORT"].includes(activeRole);
 
   const [loading, setLoading] = useState(false);
-  const [terminals, setTerminals] = useState([]);
+  const [operators, setOperators] = useState([]);
   const [ports, setPorts] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -65,15 +65,15 @@ const Terminals = () => {
 
   // Filter states
   const [filters, setFilters] = useState({
-    status: undefined,
-    search: undefined,
-    portId: undefined,
+    search: "",
+    status: "",
+    portId: "",
   });
 
   // Modal states
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState("create"); // create or edit
-  const [selectedTerminal, setSelectedTerminal] = useState(null);
+  const [selectedOperator, setSelectedOperator] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
 
   // Stats
@@ -84,11 +84,11 @@ const Terminals = () => {
   });
 
   useEffect(() => {
-    fetchTerminals();
+    fetchOperators();
     fetchPorts();
   }, [pagination.current, pagination.pageSize, filters]);
 
-  const fetchTerminals = async () => {
+  const fetchOperators = async () => {
     try {
       setLoading(true);
       const params = {
@@ -99,19 +99,15 @@ const Terminals = () => {
 
       // Remove empty filters
       Object.keys(params).forEach((key) => {
-        if (
-          params[key] === "" ||
-          params[key] === undefined ||
-          params[key] === null
-        ) {
+        if (params[key] === "") {
           delete params[key];
         }
       });
 
-      const response = await terminalService.getAllTerminals(params);
+      const response = await operatorService.getAllOperators(params);
 
       if (response.success) {
-        setTerminals(response.data || []);
+        setOperators(response.data || []);
         setPagination((prev) => ({
           ...prev,
           total: response.pagination?.total || 0,
@@ -120,11 +116,11 @@ const Terminals = () => {
         // Update stats
         updateStats(response.data || []);
       } else {
-        message.error("Failed to fetch terminals");
+        message.error("Failed to fetch operators");
       }
     } catch (error) {
-      console.error("Error fetching terminals:", error);
-      message.error("Failed to fetch terminals");
+      console.error("Error fetching operators:", error);
+      message.error("Failed to fetch operators");
     } finally {
       setLoading(false);
     }
@@ -145,13 +141,13 @@ const Terminals = () => {
     }
   };
 
-  const updateStats = (terminalsData) => {
-    const total = terminalsData.length;
-    const active = terminalsData.filter(
-      (terminal) => terminal.status === "ACTIVE"
+  const updateStats = (operatorsData) => {
+    const total = operatorsData.length;
+    const active = operatorsData.filter(
+      (operator) => operator.status === "ACTIVE"
     ).length;
-    const inactive = terminalsData.filter(
-      (terminal) => terminal.status === "INACTIVE"
+    const inactive = operatorsData.filter(
+      (operator) => operator.status === "INACTIVE"
     ).length;
 
     setStats({ total, active, inactive });
@@ -177,28 +173,28 @@ const Terminals = () => {
 
   const clearFilters = () => {
     setFilters({
-      search: undefined,
-      status: undefined,
-      portId: undefined,
+      search: "",
+      status: "",
+      portId: "",
     });
     setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
   const openCreateModal = () => {
     setModalMode("create");
-    setSelectedTerminal(null);
+    setSelectedOperator(null);
     setIsModalVisible(true);
   };
 
-  const openEditModal = (terminal) => {
+  const openEditModal = (operator) => {
     setModalMode("edit");
-    setSelectedTerminal(terminal);
+    setSelectedOperator(operator);
     setIsModalVisible(true);
   };
 
   const closeModal = () => {
     setIsModalVisible(false);
-    setSelectedTerminal(null);
+    setSelectedOperator(null);
   };
 
   const handleFormSubmit = async (values) => {
@@ -207,26 +203,26 @@ const Terminals = () => {
       let response;
 
       if (modalMode === "create") {
-        response = await terminalService.createTerminal(values);
-        message.success("Terminal created successfully");
+        response = await operatorService.createOperator(values);
+        message.success("Operator created successfully");
       } else {
-        response = await terminalService.updateTerminal(
-          selectedTerminal.id,
+        response = await operatorService.updateOperator(
+          selectedOperator.id,
           values
         );
-        message.success("Terminal updated successfully");
+        message.success("Operator updated successfully");
       }
 
       if (response.success) {
         closeModal();
-        fetchTerminals();
+        fetchOperators();
       }
     } catch (error) {
       console.error(
-        `Error ${modalMode === "create" ? "creating" : "updating"} terminal:`,
+        `Error ${modalMode === "create" ? "creating" : "updating"} operator:`,
         error
       );
-      message.error(error.message || `Failed to ${modalMode} terminal`);
+      message.error(error.message || `Failed to ${modalMode} operator`);
     } finally {
       setFormLoading(false);
     }
@@ -234,14 +230,14 @@ const Terminals = () => {
 
   const handleDelete = async (id) => {
     try {
-      const response = await terminalService.deleteTerminal(id);
+      const response = await operatorService.deleteOperator(id);
       if (response.success) {
-        message.success("Terminal deleted successfully");
-        fetchTerminals();
+        message.success("Operator deleted successfully");
+        fetchOperators();
       }
     } catch (error) {
-      console.error("Error deleting terminal:", error);
-      message.error(error.message || "Failed to delete terminal");
+      console.error("Error deleting operator:", error);
+      message.error(error.message || "Failed to delete operator");
     }
   };
 
@@ -258,14 +254,17 @@ const Terminals = () => {
       render: (text, record) => (
         <div>
           <div className="font-medium">{text}</div>
-          {record.description && (
-            <Text type="secondary" className="text-xs">
-              {record.description.substring(0, 50)}
-              {record.description.length > 50 ? "..." : ""}
-            </Text>
-          )}
+          <Text type="secondary" className="text-xs">
+            {record.companyName}
+          </Text>
         </div>
       ),
+    },
+    {
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
+      render: (text) => text || "-",
     },
     {
       title: "Port",
@@ -273,23 +272,36 @@ const Terminals = () => {
       key: "port",
       render: (text, record) => (
         <div>
-          <div>{record.port?.name}</div>
-          <Text type="secondary" className="text-xs">
-            {record.port?.portCode}
-          </Text>
+          <div>{record.port?.name || "-"}</div>
+          {record.port?.portCode && (
+            <Text type="secondary" className="text-xs">
+              {record.port.portCode}
+            </Text>
+          )}
         </div>
       ),
     },
     {
-      title: "Country",
-      dataIndex: ["port", "country", "name"],
-      key: "country",
-      render: (text, record) => (
+      title: "Contact",
+      key: "contact",
+      render: (_, record) => (
         <div>
-          <div>{record.port?.country?.name}</div>
-          <Text type="secondary" className="text-xs">
-            {record.port?.country?.codeChar2}
-          </Text>
+          {record.mobNum && <div className="text-xs">M: {record.mobNum}</div>}
+          {record.telNum && <div className="text-xs">T: {record.telNum}</div>}
+        </div>
+      ),
+    },
+    {
+      title: "Location",
+      key: "location",
+      render: (_, record) => (
+        <div>
+          {record.city && <div className="text-sm">{record.city}</div>}
+          {record.country?.name && (
+            <Text type="secondary" className="text-xs">
+              {record.country.name}
+            </Text>
+          )}
         </div>
       ),
     },
@@ -307,10 +319,8 @@ const Terminals = () => {
       title: "Created",
       dataIndex: "createdAt",
       key: "createdAt",
-      render: (date) => {
-        if (!date) return "-";
-        return new Date(date).toLocaleDateString();
-      },
+      render: (date) => new Date(date).toLocaleDateString(),
+      sorter: true,
     },
     {
       title: "Actions",
@@ -320,7 +330,7 @@ const Terminals = () => {
           <Tooltip title="View Details">
             <Button type="link" icon={<EyeOutlined />} size="small" />
           </Tooltip>
-          {canEditTerminal && (
+          {canEditOperator && (
             <Tooltip title="Edit">
               <Button
                 type="link"
@@ -330,10 +340,10 @@ const Terminals = () => {
               />
             </Tooltip>
           )}
-          {canDeleteTerminal && (
+          {canDeleteOperator && (
             <Tooltip title="Delete">
               <Popconfirm
-                title="Are you sure you want to delete this terminal?"
+                title="Are you sure you want to delete this operator?"
                 description="This action cannot be undone."
                 onConfirm={() => handleDelete(record.id)}
                 okText="Yes"
@@ -362,28 +372,29 @@ const Terminals = () => {
           <Col>
             <Space>
               <Avatar
-                icon={<ContainerOutlined />}
-                style={{ backgroundColor: "#1890ff" }}
+                icon={<ToolOutlined />}
+                style={{ backgroundColor: "#722ed1" }}
                 size="large"
               />
               <div>
                 <Title level={2} style={{ margin: 0 }}>
-                  Terminal Management
+                  Operator Management
                 </Title>
                 <Text type="secondary">
-                  Manage and monitor terminals across different ports
+                  Manage and monitor operators across different ports and
+                  regions
                 </Text>
               </div>
             </Space>
           </Col>
-          {canCreateTerminal && (
+          {canCreateOperator && (
             <Col>
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={openCreateModal}
               >
-                Add Terminal
+                Add Operator
               </Button>
             </Col>
           )}
@@ -395,16 +406,16 @@ const Terminals = () => {
         <Col span={8}>
           <Card>
             <Statistic
-              title="Total Terminals"
+              title="Total Operators"
               value={pagination.total}
-              prefix={<ContainerOutlined />}
+              prefix={<ToolOutlined />}
             />
           </Card>
         </Col>
         <Col span={8}>
           <Card>
             <Statistic
-              title="Active Terminals"
+              title="Active Operators"
               value={stats.active}
               valueStyle={{ color: "#52c41a" }}
               prefix={<GlobalOutlined />}
@@ -414,7 +425,7 @@ const Terminals = () => {
         <Col span={8}>
           <Card>
             <Statistic
-              title="Inactive Terminals"
+              title="Inactive Operators"
               value={stats.inactive}
               valueStyle={{ color: "#ff4d4f" }}
             />
@@ -425,33 +436,25 @@ const Terminals = () => {
       {/* Filters and Actions */}
       <Card className="mb-4">
         <Row gutter={16} align="middle">
-          <Col xs={24} sm={24} md={8} lg={8} xl={8}>
+          <Col xs={24} sm={24} md={8} lg={6} xl={6}>
             <Search
-              placeholder="Search terminals..."
+              placeholder="Search operators..."
               allowClear
               onSearch={handleSearch}
               onChange={(e) => !e.target.value && handleSearch("")}
             />
           </Col>
-          <Col xs={24} sm={8} md={6} lg={6} xl={6}>
+          <Col xs={24} sm={8} md={4} lg={4} xl={4}>
             <Select
               placeholder="All Ports"
               allowClear
               value={filters.portId}
               onChange={(value) => handleFilterChange("portId", value)}
               className="w-full"
-              showSearch
-              filterOption={(input, option) => {
-                const port = ports.find((p) => p.id === option.value);
-                if (!port) return false;
-                const searchableText =
-                  `${port.name} ${port.portCode}`.toLowerCase();
-                return searchableText.indexOf(input.toLowerCase()) >= 0;
-              }}
             >
               {ports.map((port) => (
                 <Option key={port.id} value={port.id}>
-                  {port.name} ({port.portCode})
+                  {port.name}
                 </Option>
               ))}
             </Select>
@@ -468,7 +471,7 @@ const Terminals = () => {
               <Option value="INACTIVE">Inactive</Option>
             </Select>
           </Col>
-          <Col xs={24} sm={8} md={3} lg={3} xl={3}>
+          <Col xs={24} sm={8} md={4} lg={4} xl={4}>
             <Button
               className="w-full"
               icon={<FilterOutlined />}
@@ -477,11 +480,11 @@ const Terminals = () => {
               Clear
             </Button>
           </Col>
-          <Col xs={24} sm={8} md={3} lg={3} xl={3}>
+          <Col xs={24} sm={8} md={4} lg={4} xl={4}>
             <Button
               className="w-full"
               icon={<ReloadOutlined />}
-              onClick={fetchTerminals}
+              onClick={fetchOperators}
             >
               Refresh
             </Button>
@@ -489,11 +492,11 @@ const Terminals = () => {
         </Row>
       </Card>
 
-      {/* Terminals Table */}
+      {/* Operators Table */}
       <Card>
         <Table
           columns={columns}
-          dataSource={terminals}
+          dataSource={operators}
           rowKey="id"
           loading={loading}
           pagination={pagination}
@@ -502,15 +505,15 @@ const Terminals = () => {
         />
       </Card>
 
-      {/* Terminal Form Modal */}
+      {/* Operator Form Modal */}
       <FormModal
         visible={isModalVisible}
         onCancel={closeModal}
-        title={modalMode === "create" ? "Create New Terminal" : "Edit Terminal"}
-        width={800}
+        title={modalMode === "create" ? "Create New Operator" : "Edit Operator"}
+        width={900}
       >
-        <TerminalForm
-          initialValues={selectedTerminal}
+        <OperatorForm
+          initialValues={selectedOperator}
           onSubmit={handleFormSubmit}
           onCancel={closeModal}
           isLoading={formLoading}
@@ -520,4 +523,4 @@ const Terminals = () => {
   );
 };
 
-export default Terminals;
+export default Operators;

@@ -24,36 +24,33 @@ import {
   EditOutlined,
   DeleteOutlined,
   ContainerOutlined,
-  GlobalOutlined,
   FilterOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
 import FormModal from "../components/common/FormModal";
-import TerminalForm from "../components/forms/terminalForm";
-import terminalService from "../services/terminalService";
-import portService from "../services/portService";
+import ContainerTypeForm from "../components/forms/ContainerTypeForm";
+import containerTypeService from "../services/containerTypeService";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
 const { Option } = Select;
 
-const Terminals = () => {
-  const { hasPermission, hasRole, activeRole } = useAuth();
+const ContainerTypes = () => {
+  const { hasPermission, activeRole } = useAuth();
 
-  // Check if user can perform terminal operations based on roles
-  const canCreateTerminal =
-    hasPermission("terminals:create") ||
-    ["ADMIN", "PORT", "MASTER_PORT"].includes(activeRole);
-  const canEditTerminal =
-    hasPermission("terminals:update") ||
-    ["ADMIN", "PORT", "MASTER_PORT"].includes(activeRole);
-  const canDeleteTerminal =
-    hasPermission("terminals:delete") ||
-    ["ADMIN", "MASTER_PORT"].includes(activeRole);
+  // Check if user can perform container type operations based on roles
+  const canCreateContainerType =
+    hasPermission("container-types:create") ||
+    ["ADMIN", "CONTAINER", "MASTER_CONTAINER"].includes(activeRole);
+  const canEditContainerType =
+    hasPermission("container-types:update") ||
+    ["ADMIN", "CONTAINER", "MASTER_CONTAINER"].includes(activeRole);
+  const canDeleteContainerType =
+    hasPermission("container-types:delete") ||
+    ["ADMIN", "MASTER_CONTAINER"].includes(activeRole);
 
   const [loading, setLoading] = useState(false);
-  const [terminals, setTerminals] = useState([]);
-  const [ports, setPorts] = useState([]);
+  const [containerTypes, setContainerTypes] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -65,15 +62,15 @@ const Terminals = () => {
 
   // Filter states
   const [filters, setFilters] = useState({
-    status: undefined,
-    search: undefined,
-    portId: undefined,
+    search: "",
+    status: "",
+    type: "",
   });
 
   // Modal states
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState("create"); // create or edit
-  const [selectedTerminal, setSelectedTerminal] = useState(null);
+  const [selectedContainerType, setSelectedContainerType] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
 
   // Stats
@@ -81,14 +78,15 @@ const Terminals = () => {
     total: 0,
     active: 0,
     inactive: 0,
+    dryContainer: 0,
+    reeferContainer: 0,
   });
 
   useEffect(() => {
-    fetchTerminals();
-    fetchPorts();
+    fetchContainerTypes();
   }, [pagination.current, pagination.pageSize, filters]);
 
-  const fetchTerminals = async () => {
+  const fetchContainerTypes = async () => {
     try {
       setLoading(true);
       const params = {
@@ -99,19 +97,16 @@ const Terminals = () => {
 
       // Remove empty filters
       Object.keys(params).forEach((key) => {
-        if (
-          params[key] === "" ||
-          params[key] === undefined ||
-          params[key] === null
-        ) {
+        if (params[key] === "") {
           delete params[key];
         }
       });
 
-      const response = await terminalService.getAllTerminals(params);
+      const response = await containerTypeService.getAllContainerTypes(params);
+      console.log(response);
 
       if (response.success) {
-        setTerminals(response.data || []);
+        setContainerTypes(response.data || []);
         setPagination((prev) => ({
           ...prev,
           total: response.pagination?.total || 0,
@@ -120,41 +115,32 @@ const Terminals = () => {
         // Update stats
         updateStats(response.data || []);
       } else {
-        message.error("Failed to fetch terminals");
+        message.error("Failed to fetch container types");
       }
     } catch (error) {
-      console.error("Error fetching terminals:", error);
-      message.error("Failed to fetch terminals");
+      console.error("Error fetching container types:", error);
+      message.error("Failed to fetch container types");
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchPorts = async () => {
-    try {
-      const response = await portService.getAllPorts({
-        status: "ACTIVE",
-        limit: 1000,
-      });
-
-      if (response.success) {
-        setPorts(response.data || []);
-      }
-    } catch (error) {
-      console.error("Error fetching ports:", error);
-    }
-  };
-
-  const updateStats = (terminalsData) => {
-    const total = terminalsData.length;
-    const active = terminalsData.filter(
-      (terminal) => terminal.status === "ACTIVE"
+  const updateStats = (containerTypesData) => {
+    const total = containerTypesData.length;
+    const active = containerTypesData.filter(
+      (containerType) => containerType.status === "ACTIVE"
     ).length;
-    const inactive = terminalsData.filter(
-      (terminal) => terminal.status === "INACTIVE"
+    const inactive = containerTypesData.filter(
+      (containerType) => containerType.status === "INACTIVE"
+    ).length;
+    const dryContainer = containerTypesData.filter(
+      (containerType) => containerType.type === "DRY_CONTAINER"
+    ).length;
+    const reeferContainer = containerTypesData.filter(
+      (containerType) => containerType.type === "REEFER_CONTAINER"
     ).length;
 
-    setStats({ total, active, inactive });
+    setStats({ total, active, inactive, dryContainer, reeferContainer });
   };
 
   const handleTableChange = (paginationConfig) => {
@@ -177,28 +163,28 @@ const Terminals = () => {
 
   const clearFilters = () => {
     setFilters({
-      search: undefined,
-      status: undefined,
-      portId: undefined,
+      search: "",
+      status: "",
+      type: "",
     });
     setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
   const openCreateModal = () => {
     setModalMode("create");
-    setSelectedTerminal(null);
+    setSelectedContainerType(null);
     setIsModalVisible(true);
   };
 
-  const openEditModal = (terminal) => {
+  const openEditModal = (containerType) => {
     setModalMode("edit");
-    setSelectedTerminal(terminal);
+    setSelectedContainerType(containerType);
     setIsModalVisible(true);
   };
 
   const closeModal = () => {
     setIsModalVisible(false);
-    setSelectedTerminal(null);
+    setSelectedContainerType(null);
   };
 
   const handleFormSubmit = async (values) => {
@@ -207,26 +193,28 @@ const Terminals = () => {
       let response;
 
       if (modalMode === "create") {
-        response = await terminalService.createTerminal(values);
-        message.success("Terminal created successfully");
+        response = await containerTypeService.createContainerType(values);
+        message.success("Container type created successfully");
       } else {
-        response = await terminalService.updateTerminal(
-          selectedTerminal.id,
+        response = await containerTypeService.updateContainerType(
+          selectedContainerType.id,
           values
         );
-        message.success("Terminal updated successfully");
+        message.success("Container type updated successfully");
       }
 
       if (response.success) {
         closeModal();
-        fetchTerminals();
+        fetchContainerTypes();
       }
     } catch (error) {
       console.error(
-        `Error ${modalMode === "create" ? "creating" : "updating"} terminal:`,
+        `Error ${
+          modalMode === "create" ? "creating" : "updating"
+        } container type:`,
         error
       );
-      message.error(error.message || `Failed to ${modalMode} terminal`);
+      message.error(error.message || `Failed to ${modalMode} container type`);
     } finally {
       setFormLoading(false);
     }
@@ -234,15 +222,31 @@ const Terminals = () => {
 
   const handleDelete = async (id) => {
     try {
-      const response = await terminalService.deleteTerminal(id);
+      const response = await containerTypeService.deleteContainerType(id);
       if (response.success) {
-        message.success("Terminal deleted successfully");
-        fetchTerminals();
+        message.success("Container type deleted successfully");
+        fetchContainerTypes();
       }
     } catch (error) {
-      console.error("Error deleting terminal:", error);
-      message.error(error.message || "Failed to delete terminal");
+      console.error("Error deleting container type:", error);
+      message.error(error.message || "Failed to delete container type");
     }
+  };
+
+  const getTypeTag = (type) => {
+    const types = {
+      DRY_CONTAINER: { color: "blue", label: "Dry Container" },
+      REEFER_CONTAINER: { color: "cyan", label: "Reefer Container" },
+      TANK_CONTAINER: { color: "green", label: "Tank Container" },
+      FLAT_RACK: { color: "purple", label: "Flat Rack" },
+      OPEN_TOP: { color: "orange", label: "Open Top" },
+    };
+
+    return (
+      <Tag color={types[type]?.color || "default"}>
+        {types[type]?.label || type}
+      </Tag>
+    );
   };
 
   const getStatusTag = (status) => {
@@ -258,38 +262,64 @@ const Terminals = () => {
       render: (text, record) => (
         <div>
           <div className="font-medium">{text}</div>
-          {record.description && (
+          {record.isoCode && (
             <Text type="secondary" className="text-xs">
-              {record.description.substring(0, 50)}
-              {record.description.length > 50 ? "..." : ""}
+              ISO: {record.isoCode}
             </Text>
           )}
         </div>
       ),
     },
     {
-      title: "Port",
-      dataIndex: ["port", "name"],
-      key: "port",
-      render: (text, record) => (
-        <div>
-          <div>{record.port?.name}</div>
-          <Text type="secondary" className="text-xs">
-            {record.port?.portCode}
-          </Text>
-        </div>
-      ),
+      title: "Type",
+      dataIndex: "type",
+      key: "type",
+      render: getTypeTag,
+      filters: [
+        { text: "Dry Container", value: "DRY_CONTAINER" },
+        { text: "Reefer Container", value: "REEFER_CONTAINER" },
+        { text: "Tank Container", value: "TANK_CONTAINER" },
+        { text: "Flat Rack", value: "FLAT_RACK" },
+        { text: "Open Top", value: "OPEN_TOP" },
+      ],
     },
     {
-      title: "Country",
-      dataIndex: ["port", "country", "name"],
-      key: "country",
-      render: (text, record) => (
+      title: "ISO Code",
+      dataIndex: "isoCode",
+      key: "isoCode",
+      render: (text) => text || "-",
+    },
+    {
+      title: "Notes",
+      dataIndex: "notes",
+      key: "notes",
+      render: (text) =>
+        text ? (
+          <div className="max-w-xs">
+            {text.length > 50 ? `${text.substring(0, 50)}...` : text}
+          </div>
+        ) : (
+          "-"
+        ),
+    },
+    {
+      title: "Tariffs",
+      dataIndex: "tariffs",
+      key: "tariffs",
+      render: (tariffs) => (
         <div>
-          <div>{record.port?.country?.name}</div>
-          <Text type="secondary" className="text-xs">
-            {record.port?.country?.codeChar2}
-          </Text>
+          <span>{tariffs?.length || 0}</span>
+          {tariffs?.length > 0 && (
+            <Tooltip
+              title={tariffs
+                .map((t) => `${t.eventType} - ${t.productType} (Qty: ${t.qty})`)
+                .join(", ")}
+            >
+              <Button type="link" size="small">
+                View
+              </Button>
+            </Tooltip>
+          )}
         </div>
       ),
     },
@@ -320,7 +350,7 @@ const Terminals = () => {
           <Tooltip title="View Details">
             <Button type="link" icon={<EyeOutlined />} size="small" />
           </Tooltip>
-          {canEditTerminal && (
+          {canEditContainerType && (
             <Tooltip title="Edit">
               <Button
                 type="link"
@@ -330,10 +360,10 @@ const Terminals = () => {
               />
             </Tooltip>
           )}
-          {canDeleteTerminal && (
+          {canDeleteContainerType && (
             <Tooltip title="Delete">
               <Popconfirm
-                title="Are you sure you want to delete this terminal?"
+                title="Are you sure you want to delete this container type?"
                 description="This action cannot be undone."
                 onConfirm={() => handleDelete(record.id)}
                 okText="Yes"
@@ -368,22 +398,23 @@ const Terminals = () => {
               />
               <div>
                 <Title level={2} style={{ margin: 0 }}>
-                  Terminal Management
+                  Container Type Management
                 </Title>
                 <Text type="secondary">
-                  Manage and monitor terminals across different ports
+                  Manage and monitor different types of containers and their
+                  specifications
                 </Text>
               </div>
             </Space>
           </Col>
-          {canCreateTerminal && (
+          {canCreateContainerType && (
             <Col>
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={openCreateModal}
               >
-                Add Terminal
+                Add Container Type
               </Button>
             </Col>
           )}
@@ -392,31 +423,48 @@ const Terminals = () => {
 
       {/* Statistics Cards */}
       <Row gutter={16} className="mb-6">
-        <Col span={8}>
+        <Col span={5}>
           <Card>
             <Statistic
-              title="Total Terminals"
+              title="Total Types"
               value={pagination.total}
               prefix={<ContainerOutlined />}
             />
           </Card>
         </Col>
-        <Col span={8}>
+        <Col span={5}>
           <Card>
             <Statistic
-              title="Active Terminals"
+              title="Active Types"
               value={stats.active}
               valueStyle={{ color: "#52c41a" }}
-              prefix={<GlobalOutlined />}
             />
           </Card>
         </Col>
-        <Col span={8}>
+        <Col span={5}>
           <Card>
             <Statistic
-              title="Inactive Terminals"
+              title="Inactive Types"
               value={stats.inactive}
               valueStyle={{ color: "#ff4d4f" }}
+            />
+          </Card>
+        </Col>
+        <Col span={5}>
+          <Card>
+            <Statistic
+              title="Dry Containers"
+              value={stats.dryContainer}
+              valueStyle={{ color: "#1890ff" }}
+            />
+          </Card>
+        </Col>
+        <Col span={4}>
+          <Card>
+            <Statistic
+              title="Reefer Containers"
+              value={stats.reeferContainer}
+              valueStyle={{ color: "#13c2c2" }}
             />
           </Card>
         </Col>
@@ -427,7 +475,7 @@ const Terminals = () => {
         <Row gutter={16} align="middle">
           <Col xs={24} sm={24} md={8} lg={8} xl={8}>
             <Search
-              placeholder="Search terminals..."
+              placeholder="Search container types..."
               allowClear
               onSearch={handleSearch}
               onChange={(e) => !e.target.value && handleSearch("")}
@@ -435,25 +483,17 @@ const Terminals = () => {
           </Col>
           <Col xs={24} sm={8} md={6} lg={6} xl={6}>
             <Select
-              placeholder="All Ports"
+              placeholder="All Types"
               allowClear
-              value={filters.portId}
-              onChange={(value) => handleFilterChange("portId", value)}
+              value={filters.type}
+              onChange={(value) => handleFilterChange("type", value)}
               className="w-full"
-              showSearch
-              filterOption={(input, option) => {
-                const port = ports.find((p) => p.id === option.value);
-                if (!port) return false;
-                const searchableText =
-                  `${port.name} ${port.portCode}`.toLowerCase();
-                return searchableText.indexOf(input.toLowerCase()) >= 0;
-              }}
             >
-              {ports.map((port) => (
-                <Option key={port.id} value={port.id}>
-                  {port.name} ({port.portCode})
-                </Option>
-              ))}
+              <Option value="DRY_CONTAINER">Dry Container</Option>
+              <Option value="REEFER_CONTAINER">Reefer Container</Option>
+              <Option value="TANK_CONTAINER">Tank Container</Option>
+              <Option value="FLAT_RACK">Flat Rack</Option>
+              <Option value="OPEN_TOP">Open Top</Option>
             </Select>
           </Col>
           <Col xs={24} sm={8} md={4} lg={4} xl={4}>
@@ -481,7 +521,7 @@ const Terminals = () => {
             <Button
               className="w-full"
               icon={<ReloadOutlined />}
-              onClick={fetchTerminals}
+              onClick={fetchContainerTypes}
             >
               Refresh
             </Button>
@@ -489,11 +529,11 @@ const Terminals = () => {
         </Row>
       </Card>
 
-      {/* Terminals Table */}
+      {/* Container Types Table */}
       <Card>
         <Table
           columns={columns}
-          dataSource={terminals}
+          dataSource={containerTypes}
           rowKey="id"
           loading={loading}
           pagination={pagination}
@@ -502,15 +542,19 @@ const Terminals = () => {
         />
       </Card>
 
-      {/* Terminal Form Modal */}
+      {/* Container Type Form Modal */}
       <FormModal
         visible={isModalVisible}
         onCancel={closeModal}
-        title={modalMode === "create" ? "Create New Terminal" : "Edit Terminal"}
+        title={
+          modalMode === "create"
+            ? "Create New Container Type"
+            : "Edit Container Type"
+        }
         width={800}
       >
-        <TerminalForm
-          initialValues={selectedTerminal}
+        <ContainerTypeForm
+          initialValues={selectedContainerType}
           onSubmit={handleFormSubmit}
           onCancel={closeModal}
           isLoading={formLoading}
@@ -520,4 +564,4 @@ const Terminals = () => {
   );
 };
 
-export default Terminals;
+export default ContainerTypes;

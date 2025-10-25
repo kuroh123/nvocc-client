@@ -17,6 +17,17 @@ import { ConfigProvider } from "antd";
 import { Result, Button } from "antd";
 import "./App.css";
 import Terminals from "./pages/Terminals";
+import Depots from "./pages/Depots";
+import Agents from "./pages/Agents";
+import Charges from "./pages/Charges";
+import Vessels from "./pages/Vessels";
+import Operators from "./pages/Operators";
+import Cargo from "./pages/Cargo";
+import VesselSchedules from "./pages/VesselSchedules";
+import Commodities from "./pages/Commodities";
+import ContainerTypes from "./pages/ContainerTypes";
+import BankAccounts from "./pages/BankAccounts";
+import Tariffs from "./pages/Tariffs";
 
 // Ant Design theme configuration
 const theme = {
@@ -80,18 +91,92 @@ function App() {
                 />
 
                 <Route
+                  path="agents"
+                  element={
+                    <ProtectedRoute requirePermission="agents:read">
+                      <Agents />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="charges"
+                  element={
+                    <ProtectedRoute requirePermission="charges:read">
+                      <Charges />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="cargo"
+                  element={
+                    <ProtectedRoute requirePermission="cargo:read">
+                      <Cargo />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="operators"
+                  element={
+                    <ProtectedRoute requirePermission="operators:read">
+                      <Operators />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="vessels"
+                  element={
+                    <ProtectedRoute requirePermission="vessels:read">
+                      <Vessels />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="vessel-schedules"
+                  element={
+                    <ProtectedRoute requirePermission="vessel-schedules:read">
+                      <VesselSchedules />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
                   path="depots"
                   element={
-                    <Result
-                      status="info"
-                      title="Depots Management"
-                      subTitle="This page is under development."
-                      extra={
-                        <Button type="primary" href="/dashboard">
-                          Go to Dashboard
-                        </Button>
-                      }
-                    />
+                    <ProtectedRoute requirePermission="terminals:read">
+                      <Depots />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="commodities"
+                  element={
+                    <ProtectedRoute requirePermission="commodities:read">
+                      <Commodities />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="container-types"
+                  element={
+                    <ProtectedRoute requirePermission="container-types:read">
+                      <ContainerTypes />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="bank-accounts"
+                  element={
+                    <ProtectedRoute requirePermission="bank-accounts:read">
+                      <BankAccounts />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="tariffs"
+                  element={
+                    <ProtectedRoute requirePermission="tariffs:read">
+                      <Tariffs />
+                    </ProtectedRoute>
                   }
                 />
 

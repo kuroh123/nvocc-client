@@ -23,37 +23,39 @@ import {
   EyeOutlined,
   EditOutlined,
   DeleteOutlined,
-  ContainerOutlined,
-  GlobalOutlined,
+  BankOutlined,
+  DollarOutlined,
   FilterOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
 import FormModal from "../components/common/FormModal";
-import TerminalForm from "../components/forms/terminalForm";
-import terminalService from "../services/terminalService";
-import portService from "../services/portService";
+import BankAccountForm from "../components/forms/BankAccountForm";
+import bankAccountService from "../services/bankAccountService";
+import agentService from "../services/agentService";
+import countryService from "../services/countryService";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
 const { Option } = Select;
 
-const Terminals = () => {
-  const { hasPermission, hasRole, activeRole } = useAuth();
+const BankAccounts = () => {
+  const { hasPermission, activeRole } = useAuth();
 
-  // Check if user can perform terminal operations based on roles
-  const canCreateTerminal =
-    hasPermission("terminals:create") ||
-    ["ADMIN", "PORT", "MASTER_PORT"].includes(activeRole);
-  const canEditTerminal =
-    hasPermission("terminals:update") ||
-    ["ADMIN", "PORT", "MASTER_PORT"].includes(activeRole);
-  const canDeleteTerminal =
-    hasPermission("terminals:delete") ||
-    ["ADMIN", "MASTER_PORT"].includes(activeRole);
+  // Check if user can perform bank account operations based on roles
+  const canCreateBankAccount =
+    hasPermission("bank-accounts:create") ||
+    ["ADMIN", "AGENT", "MASTER_AGENT"].includes(activeRole);
+  const canEditBankAccount =
+    hasPermission("bank-accounts:update") ||
+    ["ADMIN", "AGENT", "MASTER_AGENT"].includes(activeRole);
+  const canDeleteBankAccount =
+    hasPermission("bank-accounts:delete") ||
+    ["ADMIN", "MASTER_AGENT"].includes(activeRole);
 
   const [loading, setLoading] = useState(false);
-  const [terminals, setTerminals] = useState([]);
-  const [ports, setPorts] = useState([]);
+  const [bankAccounts, setBankAccounts] = useState([]);
+  const [agents, setAgents] = useState([]);
+  const [countries, setCountries] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -65,15 +67,16 @@ const Terminals = () => {
 
   // Filter states
   const [filters, setFilters] = useState({
-    status: undefined,
-    search: undefined,
-    portId: undefined,
+    search: "",
+    status: "",
+    agentId: "",
+    countryId: "",
   });
 
   // Modal states
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState("create"); // create or edit
-  const [selectedTerminal, setSelectedTerminal] = useState(null);
+  const [selectedBankAccount, setSelectedBankAccount] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
 
   // Stats
@@ -84,11 +87,12 @@ const Terminals = () => {
   });
 
   useEffect(() => {
-    fetchTerminals();
-    fetchPorts();
+    fetchBankAccounts();
+    fetchAgents();
+    fetchCountries();
   }, [pagination.current, pagination.pageSize, filters]);
 
-  const fetchTerminals = async () => {
+  const fetchBankAccounts = async () => {
     try {
       setLoading(true);
       const params = {
@@ -99,19 +103,16 @@ const Terminals = () => {
 
       // Remove empty filters
       Object.keys(params).forEach((key) => {
-        if (
-          params[key] === "" ||
-          params[key] === undefined ||
-          params[key] === null
-        ) {
+        if (params[key] === "") {
           delete params[key];
         }
       });
 
-      const response = await terminalService.getAllTerminals(params);
+      const response = await bankAccountService.getAllBankAccounts(params);
+      console.log(response);
 
       if (response.success) {
-        setTerminals(response.data || []);
+        setBankAccounts(response.data || []);
         setPagination((prev) => ({
           ...prev,
           total: response.pagination?.total || 0,
@@ -120,38 +121,53 @@ const Terminals = () => {
         // Update stats
         updateStats(response.data || []);
       } else {
-        message.error("Failed to fetch terminals");
+        message.error("Failed to fetch bank accounts");
       }
     } catch (error) {
-      console.error("Error fetching terminals:", error);
-      message.error("Failed to fetch terminals");
+      console.error("Error fetching bank accounts:", error);
+      message.error("Failed to fetch bank accounts");
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchPorts = async () => {
+  const fetchAgents = async () => {
     try {
-      const response = await portService.getAllPorts({
+      const response = await agentService.getAllAgents({
         status: "ACTIVE",
         limit: 1000,
       });
 
       if (response.success) {
-        setPorts(response.data || []);
+        setAgents(response.data || []);
       }
     } catch (error) {
-      console.error("Error fetching ports:", error);
+      console.error("Error fetching agents:", error);
     }
   };
 
-  const updateStats = (terminalsData) => {
-    const total = terminalsData.length;
-    const active = terminalsData.filter(
-      (terminal) => terminal.status === "ACTIVE"
+  const fetchCountries = async () => {
+    try {
+      const response = await countryService.getAllCountries({
+        status: "ACTIVE",
+        limit: 1000,
+      });
+
+      if (response.success) {
+        setCountries(response.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching countries:", error);
+    }
+  };
+
+  const updateStats = (bankAccountsData) => {
+    const total = bankAccountsData.length;
+    const active = bankAccountsData.filter(
+      (bankAccount) => bankAccount.status === "ACTIVE"
     ).length;
-    const inactive = terminalsData.filter(
-      (terminal) => terminal.status === "INACTIVE"
+    const inactive = bankAccountsData.filter(
+      (bankAccount) => bankAccount.status === "INACTIVE"
     ).length;
 
     setStats({ total, active, inactive });
@@ -177,28 +193,29 @@ const Terminals = () => {
 
   const clearFilters = () => {
     setFilters({
-      search: undefined,
-      status: undefined,
-      portId: undefined,
+      search: "",
+      status: "",
+      agentId: "",
+      countryId: "",
     });
     setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
   const openCreateModal = () => {
     setModalMode("create");
-    setSelectedTerminal(null);
+    setSelectedBankAccount(null);
     setIsModalVisible(true);
   };
 
-  const openEditModal = (terminal) => {
+  const openEditModal = (bankAccount) => {
     setModalMode("edit");
-    setSelectedTerminal(terminal);
+    setSelectedBankAccount(bankAccount);
     setIsModalVisible(true);
   };
 
   const closeModal = () => {
     setIsModalVisible(false);
-    setSelectedTerminal(null);
+    setSelectedBankAccount(null);
   };
 
   const handleFormSubmit = async (values) => {
@@ -207,26 +224,28 @@ const Terminals = () => {
       let response;
 
       if (modalMode === "create") {
-        response = await terminalService.createTerminal(values);
-        message.success("Terminal created successfully");
+        response = await bankAccountService.createBankAccount(values);
+        message.success("Bank account created successfully");
       } else {
-        response = await terminalService.updateTerminal(
-          selectedTerminal.id,
+        response = await bankAccountService.updateBankAccount(
+          selectedBankAccount.id,
           values
         );
-        message.success("Terminal updated successfully");
+        message.success("Bank account updated successfully");
       }
 
       if (response.success) {
         closeModal();
-        fetchTerminals();
+        fetchBankAccounts();
       }
     } catch (error) {
       console.error(
-        `Error ${modalMode === "create" ? "creating" : "updating"} terminal:`,
+        `Error ${
+          modalMode === "create" ? "creating" : "updating"
+        } bank account:`,
         error
       );
-      message.error(error.message || `Failed to ${modalMode} terminal`);
+      message.error(error.message || `Failed to ${modalMode} bank account`);
     } finally {
       setFormLoading(false);
     }
@@ -234,14 +253,14 @@ const Terminals = () => {
 
   const handleDelete = async (id) => {
     try {
-      const response = await terminalService.deleteTerminal(id);
+      const response = await bankAccountService.deleteBankAccount(id);
       if (response.success) {
-        message.success("Terminal deleted successfully");
-        fetchTerminals();
+        message.success("Bank account deleted successfully");
+        fetchBankAccounts();
       }
     } catch (error) {
-      console.error("Error deleting terminal:", error);
-      message.error(error.message || "Failed to delete terminal");
+      console.error("Error deleting bank account:", error);
+      message.error(error.message || "Failed to delete bank account");
     }
   };
 
@@ -251,45 +270,90 @@ const Terminals = () => {
 
   const columns = [
     {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
+      title: "Account Name",
+      dataIndex: "accountName",
+      key: "accountName",
       sorter: true,
       render: (text, record) => (
         <div>
           <div className="font-medium">{text}</div>
-          {record.description && (
+          <Text type="secondary" className="text-xs">
+            {record.accountNum}
+          </Text>
+        </div>
+      ),
+    },
+    {
+      title: "Agent",
+      dataIndex: ["agent", "name"],
+      key: "agent",
+      render: (text, record) => (
+        <div>
+          <div>{record.agent?.name}</div>
+          {record.agent?.code && (
             <Text type="secondary" className="text-xs">
-              {record.description.substring(0, 50)}
-              {record.description.length > 50 ? "..." : ""}
+              Code: {record.agent?.code}
             </Text>
           )}
         </div>
       ),
     },
     {
-      title: "Port",
-      dataIndex: ["port", "name"],
-      key: "port",
+      title: "Bank Details",
+      key: "bankDetails",
+      render: (_, record) => (
+        <div>
+          <div className="font-medium">{record.bankName}</div>
+          {record.bankBranch && (
+            <Text type="secondary" className="text-xs">
+              Branch: {record.bankBranch}
+            </Text>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: "Currency",
+      dataIndex: ["currency", "name"],
+      key: "currency",
       render: (text, record) => (
         <div>
-          <div>{record.port?.name}</div>
+          <div>{record.currency?.name}</div>
           <Text type="secondary" className="text-xs">
-            {record.port?.portCode}
+            {record.currency?.code}
           </Text>
         </div>
       ),
     },
     {
       title: "Country",
-      dataIndex: ["port", "country", "name"],
+      dataIndex: ["country", "name"],
       key: "country",
       render: (text, record) => (
         <div>
-          <div>{record.port?.country?.name}</div>
+          <div>{record.country?.name}</div>
           <Text type="secondary" className="text-xs">
-            {record.port?.country?.codeChar2}
+            {record.country?.codeChar2}
           </Text>
+        </div>
+      ),
+    },
+    {
+      title: "Swift/IFSC",
+      key: "codes",
+      render: (_, record) => (
+        <div>
+          {record.swiftCode && (
+            <div>
+              <Text strong>SWIFT:</Text> {record.swiftCode}
+            </div>
+          )}
+          {record.ifscCode && (
+            <div>
+              <Text strong>IFSC:</Text> {record.ifscCode}
+            </div>
+          )}
+          {!record.swiftCode && !record.ifscCode && "-"}
         </div>
       ),
     },
@@ -320,7 +384,7 @@ const Terminals = () => {
           <Tooltip title="View Details">
             <Button type="link" icon={<EyeOutlined />} size="small" />
           </Tooltip>
-          {canEditTerminal && (
+          {canEditBankAccount && (
             <Tooltip title="Edit">
               <Button
                 type="link"
@@ -330,10 +394,10 @@ const Terminals = () => {
               />
             </Tooltip>
           )}
-          {canDeleteTerminal && (
+          {canDeleteBankAccount && (
             <Tooltip title="Delete">
               <Popconfirm
-                title="Are you sure you want to delete this terminal?"
+                title="Are you sure you want to delete this bank account?"
                 description="This action cannot be undone."
                 onConfirm={() => handleDelete(record.id)}
                 okText="Yes"
@@ -362,28 +426,28 @@ const Terminals = () => {
           <Col>
             <Space>
               <Avatar
-                icon={<ContainerOutlined />}
-                style={{ backgroundColor: "#1890ff" }}
+                icon={<BankOutlined />}
+                style={{ backgroundColor: "#722ed1" }}
                 size="large"
               />
               <div>
                 <Title level={2} style={{ margin: 0 }}>
-                  Terminal Management
+                  Bank Account Management
                 </Title>
                 <Text type="secondary">
-                  Manage and monitor terminals across different ports
+                  Manage and monitor bank accounts for different agents
                 </Text>
               </div>
             </Space>
           </Col>
-          {canCreateTerminal && (
+          {canCreateBankAccount && (
             <Col>
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={openCreateModal}
               >
-                Add Terminal
+                Add Bank Account
               </Button>
             </Col>
           )}
@@ -395,26 +459,26 @@ const Terminals = () => {
         <Col span={8}>
           <Card>
             <Statistic
-              title="Total Terminals"
+              title="Total Accounts"
               value={pagination.total}
-              prefix={<ContainerOutlined />}
+              prefix={<BankOutlined />}
             />
           </Card>
         </Col>
         <Col span={8}>
           <Card>
             <Statistic
-              title="Active Terminals"
+              title="Active Accounts"
               value={stats.active}
               valueStyle={{ color: "#52c41a" }}
-              prefix={<GlobalOutlined />}
+              prefix={<DollarOutlined />}
             />
           </Card>
         </Col>
         <Col span={8}>
           <Card>
             <Statistic
-              title="Inactive Terminals"
+              title="Inactive Accounts"
               value={stats.inactive}
               valueStyle={{ color: "#ff4d4f" }}
             />
@@ -425,33 +489,56 @@ const Terminals = () => {
       {/* Filters and Actions */}
       <Card className="mb-4">
         <Row gutter={16} align="middle">
-          <Col xs={24} sm={24} md={8} lg={8} xl={8}>
+          <Col xs={24} sm={24} md={6} lg={6} xl={6}>
             <Search
-              placeholder="Search terminals..."
+              placeholder="Search bank accounts..."
               allowClear
               onSearch={handleSearch}
               onChange={(e) => !e.target.value && handleSearch("")}
             />
           </Col>
-          <Col xs={24} sm={8} md={6} lg={6} xl={6}>
+          <Col xs={24} sm={8} md={5} lg={5} xl={5}>
             <Select
-              placeholder="All Ports"
+              placeholder="All Agents"
               allowClear
-              value={filters.portId}
-              onChange={(value) => handleFilterChange("portId", value)}
+              value={filters.agentId}
+              onChange={(value) => handleFilterChange("agentId", value)}
               className="w-full"
               showSearch
               filterOption={(input, option) => {
-                const port = ports.find((p) => p.id === option.value);
-                if (!port) return false;
-                const searchableText =
-                  `${port.name} ${port.portCode}`.toLowerCase();
+                const agent = agents.find((a) => a.id === option.value);
+                if (!agent) return false;
+                const searchableText = `${agent.name} ${
+                  agent.code || ""
+                }`.toLowerCase();
                 return searchableText.indexOf(input.toLowerCase()) >= 0;
               }}
             >
-              {ports.map((port) => (
-                <Option key={port.id} value={port.id}>
-                  {port.name} ({port.portCode})
+              {agents.map((agent) => (
+                <Option key={agent.id} value={agent.id}>
+                  {agent.name} {agent.code && `(${agent.code})`}
+                </Option>
+              ))}
+            </Select>
+          </Col>
+          <Col xs={24} sm={8} md={5} lg={5} xl={5}>
+            <Select
+              placeholder="All Countries"
+              allowClear
+              value={filters.countryId}
+              onChange={(value) => handleFilterChange("countryId", value)}
+              className="w-full"
+              showSearch
+              filterOption={(input, option) => {
+                const country = countries.find((c) => c.id === option.value);
+                if (!country) return false;
+                const searchableText = `${country.name}`.toLowerCase();
+                return searchableText.indexOf(input.toLowerCase()) >= 0;
+              }}
+            >
+              {countries.map((country) => (
+                <Option key={country.id} value={country.id}>
+                  {country.name}
                 </Option>
               ))}
             </Select>
@@ -468,7 +555,7 @@ const Terminals = () => {
               <Option value="INACTIVE">Inactive</Option>
             </Select>
           </Col>
-          <Col xs={24} sm={8} md={3} lg={3} xl={3}>
+          <Col xs={24} sm={8} md={2} lg={2} xl={2}>
             <Button
               className="w-full"
               icon={<FilterOutlined />}
@@ -477,11 +564,11 @@ const Terminals = () => {
               Clear
             </Button>
           </Col>
-          <Col xs={24} sm={8} md={3} lg={3} xl={3}>
+          <Col xs={24} sm={8} md={2} lg={2} xl={2}>
             <Button
               className="w-full"
               icon={<ReloadOutlined />}
-              onClick={fetchTerminals}
+              onClick={fetchBankAccounts}
             >
               Refresh
             </Button>
@@ -489,28 +576,32 @@ const Terminals = () => {
         </Row>
       </Card>
 
-      {/* Terminals Table */}
+      {/* Bank Accounts Table */}
       <Card>
         <Table
           columns={columns}
-          dataSource={terminals}
+          dataSource={bankAccounts}
           rowKey="id"
           loading={loading}
           pagination={pagination}
           onChange={handleTableChange}
-          scroll={{ x: 1200 }}
+          scroll={{ x: 1400 }}
         />
       </Card>
 
-      {/* Terminal Form Modal */}
+      {/* Bank Account Form Modal */}
       <FormModal
         visible={isModalVisible}
         onCancel={closeModal}
-        title={modalMode === "create" ? "Create New Terminal" : "Edit Terminal"}
-        width={800}
+        title={
+          modalMode === "create"
+            ? "Create New Bank Account"
+            : "Edit Bank Account"
+        }
+        width={900}
       >
-        <TerminalForm
-          initialValues={selectedTerminal}
+        <BankAccountForm
+          initialValues={selectedBankAccount}
           onSubmit={handleFormSubmit}
           onCancel={closeModal}
           isLoading={formLoading}
@@ -520,4 +611,4 @@ const Terminals = () => {
   );
 };
 
-export default Terminals;
+export default BankAccounts;
