@@ -1,7 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { Form, Input, Select, Button, Space, message, Row, Col } from "antd";
+import {
+  Form,
+  Input,
+  Select,
+  Button,
+  Space,
+  message,
+  Row,
+  Col,
+  Tabs,
+} from "antd";
 import portService from "../../services/portService";
 import countryService from "../../services/countryService";
+import DocumentUpload from "../common/DocumentUpload";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -70,117 +81,157 @@ const PortForm = ({ initialValues, onSubmit, onCancel, isLoading = false }) => {
         portType: "SEA_PORT",
       }}
     >
-      <Row gutter={16}>
-        <Col span={12}>
-          <Form.Item
-            name="name"
-            label="Port Name"
-            rules={[
-              { required: true, message: "Please enter port name" },
-              {
-                max: 255,
-                message: "Port name must be less than 255 characters",
-              },
-            ]}
-          >
-            <Input placeholder="Enter port name" />
-          </Form.Item>
-        </Col>
-        <Col span={12}>
-          <Form.Item
-            name="portType"
-            label="Port Type"
-            rules={[{ required: true, message: "Please select port type" }]}
-          >
-            <Select placeholder="Select port type">
-              {portTypeOptions.map((option) => (
-                <Option key={option.value} value={option.value}>
-                  {option.label}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </Col>
-      </Row>
+      <Tabs
+        defaultActiveKey="1"
+        items={[
+          {
+            key: "1",
+            label: "Basic Information",
+            children: (
+              <>
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="name"
+                      label="Port Name"
+                      rules={[
+                        { required: true, message: "Please enter port name" },
+                        {
+                          max: 255,
+                          message: "Port name must be less than 255 characters",
+                        },
+                      ]}
+                    >
+                      <Input placeholder="Enter port name" />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="portType"
+                      label="Port Type"
+                      rules={[
+                        { required: true, message: "Please select port type" },
+                      ]}
+                    >
+                      <Select placeholder="Select port type">
+                        {portTypeOptions.map((option) => (
+                          <Option key={option.value} value={option.value}>
+                            {option.label}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                </Row>
 
-      <Row gutter={16}>
-        <Col span={12}>
-          <Form.Item
-            name="countryId"
-            label="Country"
-            rules={[{ required: true, message: "Please select country" }]}
-          >
-            <Select
-              placeholder="Select country"
-              loading={loadingCountries}
-              showSearch
-              filterOption={(input, option) => {
-                // Find the country object to get the searchable text
-                const country = countries.find((c) => c.id === option.value);
-                if (!country) return false;
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="countryId"
+                      label="Country"
+                      rules={[
+                        { required: true, message: "Please select country" },
+                      ]}
+                    >
+                      <Select
+                        placeholder="Select country"
+                        loading={loadingCountries}
+                        showSearch
+                        filterOption={(input, option) => {
+                          // Find the country object to get the searchable text
+                          const country = countries.find(
+                            (c) => c.id === option.value
+                          );
+                          if (!country) return false;
 
-                const searchableText =
-                  `${country.name} ${country.codeChar2}`.toLowerCase();
-                return searchableText.indexOf(input.toLowerCase()) >= 0;
-              }}
-            >
-              {countries.map((country) => (
-                <Option key={country.id} value={country.id}>
-                  {country.name} ({country.codeChar2})
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </Col>
-        <Col span={12}>
-          <Form.Item
-            name="status"
-            label="Status"
-            rules={[{ required: true, message: "Please select status" }]}
-          >
-            <Select placeholder="Select status">
-              {statusOptions.map((option) => (
-                <Option key={option.value} value={option.value}>
-                  {option.label}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </Col>
-      </Row>
+                          const searchableText =
+                            `${country.name} ${country.codeChar2}`.toLowerCase();
+                          return (
+                            searchableText.indexOf(input.toLowerCase()) >= 0
+                          );
+                        }}
+                      >
+                        {countries.map((country) => (
+                          <Option key={country.id} value={country.id}>
+                            {country.name} ({country.codeChar2})
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="status"
+                      label="Status"
+                      rules={[
+                        { required: true, message: "Please select status" },
+                      ]}
+                    >
+                      <Select placeholder="Select status">
+                        {statusOptions.map((option) => (
+                          <Option key={option.value} value={option.value}>
+                            {option.label}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                </Row>
 
-      <Row gutter={16}>
-        <Col span={12}>
-          <Form.Item
-            name="portCode"
-            label="Port Code"
-            rules={[
-              { max: 10, message: "Port code must be less than 10 characters" },
-            ]}
-          >
-            <Input placeholder="Enter port code" />
-          </Form.Item>
-        </Col>
-        <Col span={12}>
-          <Form.Item
-            name="itaCode"
-            label="ITA Code"
-            rules={[
-              { max: 10, message: "ITA code must be less than 10 characters" },
-            ]}
-          >
-            <Input placeholder="Enter ITA code" />
-          </Form.Item>
-        </Col>
-      </Row>
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="portCode"
+                      label="Port Code"
+                      rules={[
+                        {
+                          max: 10,
+                          message: "Port code must be less than 10 characters",
+                        },
+                      ]}
+                    >
+                      <Input placeholder="Enter port code" />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="itaCode"
+                      label="ITA Code"
+                      rules={[
+                        {
+                          max: 10,
+                          message: "ITA code must be less than 10 characters",
+                        },
+                      ]}
+                    >
+                      <Input placeholder="Enter ITA code" />
+                    </Form.Item>
+                  </Col>
+                </Row>
 
-      <Form.Item name="customsDetails" label="Customs Details">
-        <TextArea
-          rows={4}
-          placeholder="Enter customs details"
-          maxLength={1000}
-        />
-      </Form.Item>
+                <Form.Item name="customsDetails" label="Customs Details">
+                  <TextArea
+                    rows={4}
+                    placeholder="Enter customs details"
+                    maxLength={1000}
+                  />
+                </Form.Item>
+              </>
+            ),
+          },
+          {
+            key: "2",
+            label: "Documents",
+            children: (
+              <DocumentUpload
+                entityType="port"
+                entityId={initialValues?.id}
+                disabled={isLoading}
+              />
+            ),
+          },
+        ]}
+      />
 
       <Form.Item>
         <Space>

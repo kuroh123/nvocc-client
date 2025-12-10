@@ -23,37 +23,35 @@ import {
   EyeOutlined,
   EditOutlined,
   DeleteOutlined,
-  ContainerOutlined,
+  DollarOutlined,
   GlobalOutlined,
   FilterOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
 import FormModal from "../components/common/FormModal";
-import TerminalForm from "../components/forms/terminalForm";
-import terminalService from "../services/terminalService";
-import portService from "../services/portService";
+import ChargeForm from "../components/forms/ChargeForm";
+import chargeService from "../services/chargeService";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
 const { Option } = Select;
 
-const Terminals = () => {
+const Charges = () => {
   const { hasPermission, hasRole, activeRole } = useAuth();
 
-  // Check if user can perform terminal operations based on roles
-  const canCreateTerminal =
-    hasPermission("terminals:create") ||
+  // Check if user can perform charge operations based on roles
+  const canCreateCharge =
+    hasPermission("charges:create") ||
     ["ADMIN", "PORT", "MASTER_PORT"].includes(activeRole);
-  const canEditTerminal =
-    hasPermission("terminals:update") ||
+  const canEditCharge =
+    hasPermission("charges:update") ||
     ["ADMIN", "PORT", "MASTER_PORT"].includes(activeRole);
-  const canDeleteTerminal =
-    hasPermission("terminals:delete") ||
+  const canDeleteCharge =
+    hasPermission("charges:delete") ||
     ["ADMIN", "MASTER_PORT"].includes(activeRole);
 
   const [loading, setLoading] = useState(false);
-  const [terminals, setTerminals] = useState([]);
-  const [ports, setPorts] = useState([]);
+  const [charges, setCharges] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -65,15 +63,14 @@ const Terminals = () => {
 
   // Filter states
   const [filters, setFilters] = useState({
-    status: undefined,
-    search: undefined,
-    portId: undefined,
+    search: "",
+    status: "",
   });
 
   // Modal states
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState("create"); // create or edit
-  const [selectedTerminal, setSelectedTerminal] = useState(null);
+  const [selectedCharge, setSelectedCharge] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
 
   // Stats
@@ -84,11 +81,10 @@ const Terminals = () => {
   });
 
   useEffect(() => {
-    fetchTerminals();
-    fetchPorts();
+    fetchCharges();
   }, [pagination.current, pagination.pageSize, filters]);
 
-  const fetchTerminals = async () => {
+  const fetchCharges = async () => {
     try {
       setLoading(true);
       const params = {
@@ -99,19 +95,15 @@ const Terminals = () => {
 
       // Remove empty filters
       Object.keys(params).forEach((key) => {
-        if (
-          params[key] === "" ||
-          params[key] === undefined ||
-          params[key] === null
-        ) {
+        if (params[key] === "") {
           delete params[key];
         }
       });
 
-      const response = await terminalService.getAllTerminals(params);
+      const response = await chargeService.getAllCharges(params);
 
       if (response.success) {
-        setTerminals(response.data || []);
+        setCharges(response.data || []);
         setPagination((prev) => ({
           ...prev,
           total: response.pagination?.total || 0,
@@ -120,38 +112,23 @@ const Terminals = () => {
         // Update stats
         updateStats(response.data || []);
       } else {
-        message.error("Failed to fetch terminals");
+        message.error("Failed to fetch charges");
       }
     } catch (error) {
-      console.error("Error fetching terminals:", error);
-      message.error("Failed to fetch terminals");
+      console.error("Error fetching charges:", error);
+      message.error("Failed to fetch charges");
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchPorts = async () => {
-    try {
-      const response = await portService.getAllPorts({
-        status: "ACTIVE",
-        limit: 1000,
-      });
-
-      if (response.success) {
-        setPorts(response.data || []);
-      }
-    } catch (error) {
-      console.error("Error fetching ports:", error);
-    }
-  };
-
-  const updateStats = (terminalsData) => {
-    const total = terminalsData.length;
-    const active = terminalsData.filter(
-      (terminal) => terminal.status === "ACTIVE"
+  const updateStats = (chargesData) => {
+    const total = chargesData.length;
+    const active = chargesData.filter(
+      (charge) => charge.status === "ACTIVE"
     ).length;
-    const inactive = terminalsData.filter(
-      (terminal) => terminal.status === "INACTIVE"
+    const inactive = chargesData.filter(
+      (charge) => charge.status === "INACTIVE"
     ).length;
 
     setStats({ total, active, inactive });
@@ -177,28 +154,27 @@ const Terminals = () => {
 
   const clearFilters = () => {
     setFilters({
-      search: undefined,
-      status: undefined,
-      portId: undefined,
+      search: "",
+      status: "",
     });
     setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
   const openCreateModal = () => {
     setModalMode("create");
-    setSelectedTerminal(null);
+    setSelectedCharge(null);
     setIsModalVisible(true);
   };
 
-  const openEditModal = (terminal) => {
+  const openEditModal = (charge) => {
     setModalMode("edit");
-    setSelectedTerminal(terminal);
+    setSelectedCharge(charge);
     setIsModalVisible(true);
   };
 
   const closeModal = () => {
     setIsModalVisible(false);
-    setSelectedTerminal(null);
+    setSelectedCharge(null);
   };
 
   const handleFormSubmit = async (values) => {
@@ -207,26 +183,23 @@ const Terminals = () => {
       let response;
 
       if (modalMode === "create") {
-        response = await terminalService.createTerminal(values);
-        message.success("Terminal created successfully");
+        response = await chargeService.createCharge(values);
+        message.success("Charge created successfully");
       } else {
-        response = await terminalService.updateTerminal(
-          selectedTerminal.id,
-          values
-        );
-        message.success("Terminal updated successfully");
+        response = await chargeService.updateCharge(selectedCharge.id, values);
+        message.success("Charge updated successfully");
       }
 
       if (response.success) {
         closeModal();
-        fetchTerminals();
+        fetchCharges();
       }
     } catch (error) {
       console.error(
-        `Error ${modalMode === "create" ? "creating" : "updating"} terminal:`,
+        `Error ${modalMode === "create" ? "creating" : "updating"} charge:`,
         error
       );
-      message.error(error.message || `Failed to ${modalMode} terminal`);
+      message.error(error.message || `Failed to ${modalMode} charge`);
     } finally {
       setFormLoading(false);
     }
@@ -234,14 +207,14 @@ const Terminals = () => {
 
   const handleDelete = async (id) => {
     try {
-      const response = await terminalService.deleteTerminal(id);
+      const response = await chargeService.deleteCharge(id);
       if (response.success) {
-        message.success("Terminal deleted successfully");
-        fetchTerminals();
+        message.success("Charge deleted successfully");
+        fetchCharges();
       }
     } catch (error) {
-      console.error("Error deleting terminal:", error);
-      message.error(error.message || "Failed to delete terminal");
+      console.error("Error deleting charge:", error);
+      message.error(error.message || "Failed to delete charge");
     }
   };
 
@@ -258,38 +231,37 @@ const Terminals = () => {
       render: (text, record) => (
         <div>
           <div className="font-medium">{text}</div>
-          {record.description && (
-            <Text type="secondary" className="text-xs">
-              {record.description.substring(0, 50)}
-              {record.description.length > 50 ? "..." : ""}
-            </Text>
+          <Text type="secondary" className="text-xs">
+            {record.displayName}
+          </Text>
+        </div>
+      ),
+    },
+    {
+      title: "SAC/HSN Code",
+      dataIndex: "sacHsnCode",
+      key: "sacHsnCode",
+      render: (text) => text || "-",
+    },
+    {
+      title: "Flag",
+      dataIndex: "flag",
+      key: "flag",
+      render: (text) => text || "-",
+    },
+    {
+      title: "Note",
+      dataIndex: "note",
+      key: "note",
+      render: (text) => (
+        <div className="max-w-xs">
+          {text ? (
+            <Tooltip title={text}>
+              <div className="truncate">{text}</div>
+            </Tooltip>
+          ) : (
+            "-"
           )}
-        </div>
-      ),
-    },
-    {
-      title: "Port",
-      dataIndex: ["port", "name"],
-      key: "port",
-      render: (text, record) => (
-        <div>
-          <div>{record.port?.name}</div>
-          <Text type="secondary" className="text-xs">
-            {record.port?.portCode}
-          </Text>
-        </div>
-      ),
-    },
-    {
-      title: "Country",
-      dataIndex: ["port", "country", "name"],
-      key: "country",
-      render: (text, record) => (
-        <div>
-          <div>{record.port?.country?.name}</div>
-          <Text type="secondary" className="text-xs">
-            {record.port?.country?.codeChar2}
-          </Text>
         </div>
       ),
     },
@@ -307,10 +279,8 @@ const Terminals = () => {
       title: "Created",
       dataIndex: "createdAt",
       key: "createdAt",
-      render: (date) => {
-        if (!date) return "-";
-        return new Date(date).toLocaleDateString();
-      },
+      render: (date) => new Date(date).toLocaleDateString(),
+      sorter: true,
     },
     {
       title: "Actions",
@@ -320,7 +290,7 @@ const Terminals = () => {
           <Tooltip title="View Details">
             <Button type="link" icon={<EyeOutlined />} size="small" />
           </Tooltip>
-          {canEditTerminal && (
+          {canEditCharge && (
             <Tooltip title="Edit">
               <Button
                 type="link"
@@ -330,10 +300,10 @@ const Terminals = () => {
               />
             </Tooltip>
           )}
-          {canDeleteTerminal && (
+          {canDeleteCharge && (
             <Tooltip title="Delete">
               <Popconfirm
-                title="Are you sure you want to delete this terminal?"
+                title="Are you sure you want to delete this charge?"
                 description="This action cannot be undone."
                 onConfirm={() => handleDelete(record.id)}
                 okText="Yes"
@@ -362,28 +332,28 @@ const Terminals = () => {
           <Col>
             <Space>
               <Avatar
-                icon={<ContainerOutlined />}
-                style={{ backgroundColor: "#1890ff" }}
+                icon={<DollarOutlined />}
+                style={{ backgroundColor: "#fa8c16" }}
                 size="large"
               />
               <div>
                 <Title level={2} style={{ margin: 0 }}>
-                  Terminal Management
+                  Charge Management
                 </Title>
                 <Text type="secondary">
-                  Manage and monitor terminals across different ports
+                  Manage and monitor charges used in shipping operations
                 </Text>
               </div>
             </Space>
           </Col>
-          {canCreateTerminal && (
+          {canCreateCharge && (
             <Col>
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={openCreateModal}
               >
-                Add Terminal
+                Add Charge
               </Button>
             </Col>
           )}
@@ -395,16 +365,16 @@ const Terminals = () => {
         <Col span={8}>
           <Card>
             <Statistic
-              title="Total Terminals"
+              title="Total Charges"
               value={pagination.total}
-              prefix={<ContainerOutlined />}
+              prefix={<DollarOutlined />}
             />
           </Card>
         </Col>
         <Col span={8}>
           <Card>
             <Statistic
-              title="Active Terminals"
+              title="Active Charges"
               value={stats.active}
               valueStyle={{ color: "#52c41a" }}
               prefix={<GlobalOutlined />}
@@ -414,7 +384,7 @@ const Terminals = () => {
         <Col span={8}>
           <Card>
             <Statistic
-              title="Inactive Terminals"
+              title="Inactive Charges"
               value={stats.inactive}
               valueStyle={{ color: "#ff4d4f" }}
             />
@@ -425,36 +395,13 @@ const Terminals = () => {
       {/* Filters and Actions */}
       <Card className="mb-4">
         <Row gutter={16} align="middle">
-          <Col xs={24} sm={24} md={8} lg={8} xl={8}>
+          <Col xs={24} sm={24} md={12} lg={8} xl={8}>
             <Search
-              placeholder="Search terminals..."
+              placeholder="Search charges..."
               allowClear
               onSearch={handleSearch}
               onChange={(e) => !e.target.value && handleSearch("")}
             />
-          </Col>
-          <Col xs={24} sm={8} md={6} lg={6} xl={6}>
-            <Select
-              placeholder="All Ports"
-              allowClear
-              value={filters.portId}
-              onChange={(value) => handleFilterChange("portId", value)}
-              className="w-full"
-              showSearch
-              filterOption={(input, option) => {
-                const port = ports.find((p) => p.id === option.value);
-                if (!port) return false;
-                const searchableText =
-                  `${port.name} ${port.portCode}`.toLowerCase();
-                return searchableText.indexOf(input.toLowerCase()) >= 0;
-              }}
-            >
-              {ports.map((port) => (
-                <Option key={port.id} value={port.id}>
-                  {port.name} ({port.portCode})
-                </Option>
-              ))}
-            </Select>
           </Col>
           <Col xs={24} sm={8} md={4} lg={4} xl={4}>
             <Select
@@ -468,7 +415,7 @@ const Terminals = () => {
               <Option value="INACTIVE">Inactive</Option>
             </Select>
           </Col>
-          <Col xs={24} sm={8} md={3} lg={3} xl={3}>
+          <Col xs={24} sm={8} md={4} lg={4} xl={4}>
             <Button
               className="w-full"
               icon={<FilterOutlined />}
@@ -477,11 +424,11 @@ const Terminals = () => {
               Clear
             </Button>
           </Col>
-          <Col xs={24} sm={8} md={3} lg={3} xl={3}>
+          <Col xs={24} sm={8} md={4} lg={4} xl={4}>
             <Button
               className="w-full"
               icon={<ReloadOutlined />}
-              onClick={fetchTerminals}
+              onClick={fetchCharges}
             >
               Refresh
             </Button>
@@ -489,28 +436,28 @@ const Terminals = () => {
         </Row>
       </Card>
 
-      {/* Terminals Table */}
+      {/* Charges Table */}
       <Card>
         <Table
           columns={columns}
-          dataSource={terminals}
+          dataSource={charges}
           rowKey="id"
           loading={loading}
           pagination={pagination}
           onChange={handleTableChange}
-          scroll={{ x: 1200 }}
+          scroll={{ x: 1000 }}
         />
       </Card>
 
-      {/* Terminal Form Modal */}
+      {/* Charge Form Modal */}
       <FormModal
         visible={isModalVisible}
         onCancel={closeModal}
-        title={modalMode === "create" ? "Create New Terminal" : "Edit Terminal"}
-        width={800}
+        title={modalMode === "create" ? "Create New Charge" : "Edit Charge"}
+        width={700}
       >
-        <TerminalForm
-          initialValues={selectedTerminal}
+        <ChargeForm
+          initialValues={selectedCharge}
           onSubmit={handleFormSubmit}
           onCancel={closeModal}
           isLoading={formLoading}
@@ -520,4 +467,4 @@ const Terminals = () => {
   );
 };
 
-export default Terminals;
+export default Charges;

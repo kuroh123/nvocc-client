@@ -23,36 +23,37 @@ import {
   EyeOutlined,
   EditOutlined,
   DeleteOutlined,
-  ContainerOutlined,
+  UserOutlined,
   GlobalOutlined,
   FilterOutlined,
   ReloadOutlined,
+  CheckCircleOutlined,
 } from "@ant-design/icons";
 import FormModal from "../components/common/FormModal";
-import TerminalForm from "../components/forms/terminalForm";
-import terminalService from "../services/terminalService";
+import AgentForm from "../components/forms/AgentForm";
+import agentService from "../services/agentService";
 import portService from "../services/portService";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
 const { Option } = Select;
 
-const Terminals = () => {
+const Agents = () => {
   const { hasPermission, hasRole, activeRole } = useAuth();
 
-  // Check if user can perform terminal operations based on roles
-  const canCreateTerminal =
-    hasPermission("terminals:create") ||
+  // Check if user can perform agent operations based on roles
+  const canCreateAgent =
+    hasPermission("agents:create") ||
     ["ADMIN", "PORT", "MASTER_PORT"].includes(activeRole);
-  const canEditTerminal =
-    hasPermission("terminals:update") ||
+  const canEditAgent =
+    hasPermission("agents:update") ||
     ["ADMIN", "PORT", "MASTER_PORT"].includes(activeRole);
-  const canDeleteTerminal =
-    hasPermission("terminals:delete") ||
+  const canDeleteAgent =
+    hasPermission("agents:delete") ||
     ["ADMIN", "MASTER_PORT"].includes(activeRole);
 
   const [loading, setLoading] = useState(false);
-  const [terminals, setTerminals] = useState([]);
+  const [agents, setAgents] = useState([]);
   const [ports, setPorts] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -65,15 +66,16 @@ const Terminals = () => {
 
   // Filter states
   const [filters, setFilters] = useState({
+    search: "",
     status: undefined,
-    search: undefined,
     portId: undefined,
+    ownOffice: undefined,
   });
 
   // Modal states
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState("create"); // create or edit
-  const [selectedTerminal, setSelectedTerminal] = useState(null);
+  const [selectedAgent, setSelectedAgent] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
 
   // Stats
@@ -81,14 +83,15 @@ const Terminals = () => {
     total: 0,
     active: 0,
     inactive: 0,
+    ownOffice: 0,
   });
 
   useEffect(() => {
-    fetchTerminals();
+    fetchAgents();
     fetchPorts();
   }, [pagination.current, pagination.pageSize, filters]);
 
-  const fetchTerminals = async () => {
+  const fetchAgents = async () => {
     try {
       setLoading(true);
       const params = {
@@ -108,10 +111,12 @@ const Terminals = () => {
         }
       });
 
-      const response = await terminalService.getAllTerminals(params);
+      console.log("Fetching agents with params:", params);
+
+      const response = await agentService.getAllAgents(params);
 
       if (response.success) {
-        setTerminals(response.data || []);
+        setAgents(response.data || []);
         setPagination((prev) => ({
           ...prev,
           total: response.pagination?.total || 0,
@@ -120,11 +125,11 @@ const Terminals = () => {
         // Update stats
         updateStats(response.data || []);
       } else {
-        message.error("Failed to fetch terminals");
+        message.error("Failed to fetch agents");
       }
     } catch (error) {
-      console.error("Error fetching terminals:", error);
-      message.error("Failed to fetch terminals");
+      console.error("Error fetching agents:", error);
+      message.error("Failed to fetch agents");
     } finally {
       setLoading(false);
     }
@@ -145,16 +150,19 @@ const Terminals = () => {
     }
   };
 
-  const updateStats = (terminalsData) => {
-    const total = terminalsData.length;
-    const active = terminalsData.filter(
-      (terminal) => terminal.status === "ACTIVE"
+  const updateStats = (agentsData) => {
+    const total = agentsData.length;
+    const active = agentsData.filter(
+      (agent) => agent.status === "ACTIVE"
     ).length;
-    const inactive = terminalsData.filter(
-      (terminal) => terminal.status === "INACTIVE"
+    const inactive = agentsData.filter(
+      (agent) => agent.status === "INACTIVE"
+    ).length;
+    const ownOffice = agentsData.filter(
+      (agent) => agent.ownOffice === true
     ).length;
 
-    setStats({ total, active, inactive });
+    setStats({ total, active, inactive, ownOffice });
   };
 
   const handleTableChange = (paginationConfig) => {
@@ -177,28 +185,29 @@ const Terminals = () => {
 
   const clearFilters = () => {
     setFilters({
-      search: undefined,
+      search: "",
       status: undefined,
       portId: undefined,
+      ownOffice: undefined,
     });
     setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
   const openCreateModal = () => {
     setModalMode("create");
-    setSelectedTerminal(null);
+    setSelectedAgent(null);
     setIsModalVisible(true);
   };
 
-  const openEditModal = (terminal) => {
+  const openEditModal = (agent) => {
     setModalMode("edit");
-    setSelectedTerminal(terminal);
+    setSelectedAgent(agent);
     setIsModalVisible(true);
   };
 
   const closeModal = () => {
     setIsModalVisible(false);
-    setSelectedTerminal(null);
+    setSelectedAgent(null);
   };
 
   const handleFormSubmit = async (values) => {
@@ -207,26 +216,23 @@ const Terminals = () => {
       let response;
 
       if (modalMode === "create") {
-        response = await terminalService.createTerminal(values);
-        message.success("Terminal created successfully");
+        response = await agentService.createAgent(values);
+        message.success("Agent created successfully");
       } else {
-        response = await terminalService.updateTerminal(
-          selectedTerminal.id,
-          values
-        );
-        message.success("Terminal updated successfully");
+        response = await agentService.updateAgent(selectedAgent.id, values);
+        message.success("Agent updated successfully");
       }
 
       if (response.success) {
         closeModal();
-        fetchTerminals();
+        fetchAgents();
       }
     } catch (error) {
       console.error(
-        `Error ${modalMode === "create" ? "creating" : "updating"} terminal:`,
+        `Error ${modalMode === "create" ? "creating" : "updating"} agent:`,
         error
       );
-      message.error(error.message || `Failed to ${modalMode} terminal`);
+      message.error(error.message || `Failed to ${modalMode} agent`);
     } finally {
       setFormLoading(false);
     }
@@ -234,14 +240,14 @@ const Terminals = () => {
 
   const handleDelete = async (id) => {
     try {
-      const response = await terminalService.deleteTerminal(id);
+      const response = await agentService.deleteAgent(id);
       if (response.success) {
-        message.success("Terminal deleted successfully");
-        fetchTerminals();
+        message.success("Agent deleted successfully");
+        fetchAgents();
       }
     } catch (error) {
-      console.error("Error deleting terminal:", error);
-      message.error(error.message || "Failed to delete terminal");
+      console.error("Error deleting agent:", error);
+      message.error(error.message || "Failed to delete agent");
     }
   };
 
@@ -258,14 +264,17 @@ const Terminals = () => {
       render: (text, record) => (
         <div>
           <div className="font-medium">{text}</div>
-          {record.description && (
-            <Text type="secondary" className="text-xs">
-              {record.description.substring(0, 50)}
-              {record.description.length > 50 ? "..." : ""}
-            </Text>
-          )}
+          <Text type="secondary" className="text-xs">
+            {record.companyName}
+          </Text>
         </div>
       ),
+    },
+    {
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
+      render: (text) => text || "-",
     },
     {
       title: "Port",
@@ -273,25 +282,53 @@ const Terminals = () => {
       key: "port",
       render: (text, record) => (
         <div>
-          <div>{record.port?.name}</div>
-          <Text type="secondary" className="text-xs">
-            {record.port?.portCode}
-          </Text>
+          <div>{record.port?.name || "-"}</div>
+          {record.port?.portCode && (
+            <Text type="secondary" className="text-xs">
+              {record.port.portCode}
+            </Text>
+          )}
         </div>
       ),
     },
     {
-      title: "Country",
-      dataIndex: ["port", "country", "name"],
-      key: "country",
-      render: (text, record) => (
+      title: "Contact",
+      key: "contact",
+      render: (_, record) => (
         <div>
-          <div>{record.port?.country?.name}</div>
-          <Text type="secondary" className="text-xs">
-            {record.port?.country?.codeChar2}
-          </Text>
+          {record.mobNum && <div className="text-xs">M: {record.mobNum}</div>}
+          {record.telNum && <div className="text-xs">T: {record.telNum}</div>}
         </div>
       ),
+    },
+    {
+      title: "Location",
+      key: "location",
+      render: (_, record) => (
+        <div>
+          {record.city && <div className="text-sm">{record.city}</div>}
+          {record.country?.name && (
+            <Text type="secondary" className="text-xs">
+              {record.country.name}
+            </Text>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: "Own Office",
+      dataIndex: "ownOffice",
+      key: "ownOffice",
+      render: (ownOffice) => (
+        <Tag color={ownOffice ? "blue" : "default"}>
+          {ownOffice ? <CheckCircleOutlined /> : null}
+          {ownOffice ? "Yes" : "No"}
+        </Tag>
+      ),
+      filters: [
+        { text: "Yes", value: true },
+        { text: "No", value: false },
+      ],
     },
     {
       title: "Status",
@@ -304,15 +341,6 @@ const Terminals = () => {
       ],
     },
     {
-      title: "Created",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      render: (date) => {
-        if (!date) return "-";
-        return new Date(date).toLocaleDateString();
-      },
-    },
-    {
       title: "Actions",
       key: "actions",
       render: (_, record) => (
@@ -320,7 +348,7 @@ const Terminals = () => {
           <Tooltip title="View Details">
             <Button type="link" icon={<EyeOutlined />} size="small" />
           </Tooltip>
-          {canEditTerminal && (
+          {canEditAgent && (
             <Tooltip title="Edit">
               <Button
                 type="link"
@@ -330,10 +358,10 @@ const Terminals = () => {
               />
             </Tooltip>
           )}
-          {canDeleteTerminal && (
+          {canDeleteAgent && (
             <Tooltip title="Delete">
               <Popconfirm
-                title="Are you sure you want to delete this terminal?"
+                title="Are you sure you want to delete this agent?"
                 description="This action cannot be undone."
                 onConfirm={() => handleDelete(record.id)}
                 okText="Yes"
@@ -362,28 +390,28 @@ const Terminals = () => {
           <Col>
             <Space>
               <Avatar
-                icon={<ContainerOutlined />}
-                style={{ backgroundColor: "#1890ff" }}
+                icon={<UserOutlined />}
+                style={{ backgroundColor: "#52c41a" }}
                 size="large"
               />
               <div>
                 <Title level={2} style={{ margin: 0 }}>
-                  Terminal Management
+                  Agent Management
                 </Title>
                 <Text type="secondary">
-                  Manage and monitor terminals across different ports
+                  Manage and monitor agents across different ports and regions
                 </Text>
               </div>
             </Space>
           </Col>
-          {canCreateTerminal && (
+          {canCreateAgent && (
             <Col>
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={openCreateModal}
               >
-                Add Terminal
+                Add Agent
               </Button>
             </Col>
           )}
@@ -392,31 +420,40 @@ const Terminals = () => {
 
       {/* Statistics Cards */}
       <Row gutter={16} className="mb-6">
-        <Col span={8}>
+        <Col span={6}>
           <Card>
             <Statistic
-              title="Total Terminals"
+              title="Total Agents"
               value={pagination.total}
-              prefix={<ContainerOutlined />}
+              prefix={<UserOutlined />}
             />
           </Card>
         </Col>
-        <Col span={8}>
+        <Col span={6}>
           <Card>
             <Statistic
-              title="Active Terminals"
+              title="Active Agents"
               value={stats.active}
               valueStyle={{ color: "#52c41a" }}
-              prefix={<GlobalOutlined />}
+              prefix={<CheckCircleOutlined />}
             />
           </Card>
         </Col>
-        <Col span={8}>
+        <Col span={6}>
           <Card>
             <Statistic
-              title="Inactive Terminals"
+              title="Inactive Agents"
               value={stats.inactive}
               valueStyle={{ color: "#ff4d4f" }}
+            />
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card>
+            <Statistic
+              title="Own Office"
+              value={stats.ownOffice}
+              valueStyle={{ color: "#1890ff" }}
             />
           </Card>
         </Col>
@@ -425,33 +462,25 @@ const Terminals = () => {
       {/* Filters and Actions */}
       <Card className="mb-4">
         <Row gutter={16} align="middle">
-          <Col xs={24} sm={24} md={8} lg={8} xl={8}>
+          <Col xs={24} sm={24} md={8} lg={6} xl={6}>
             <Search
-              placeholder="Search terminals..."
+              placeholder="Search agents..."
               allowClear
               onSearch={handleSearch}
               onChange={(e) => !e.target.value && handleSearch("")}
             />
           </Col>
-          <Col xs={24} sm={8} md={6} lg={6} xl={6}>
+          <Col xs={24} sm={8} md={4} lg={4} xl={4}>
             <Select
               placeholder="All Ports"
               allowClear
               value={filters.portId}
               onChange={(value) => handleFilterChange("portId", value)}
               className="w-full"
-              showSearch
-              filterOption={(input, option) => {
-                const port = ports.find((p) => p.id === option.value);
-                if (!port) return false;
-                const searchableText =
-                  `${port.name} ${port.portCode}`.toLowerCase();
-                return searchableText.indexOf(input.toLowerCase()) >= 0;
-              }}
             >
               {ports.map((port) => (
                 <Option key={port.id} value={port.id}>
-                  {port.name} ({port.portCode})
+                  {port.name}
                 </Option>
               ))}
             </Select>
@@ -468,7 +497,19 @@ const Terminals = () => {
               <Option value="INACTIVE">Inactive</Option>
             </Select>
           </Col>
-          <Col xs={24} sm={8} md={3} lg={3} xl={3}>
+          <Col xs={24} sm={8} md={4} lg={4} xl={4}>
+            <Select
+              placeholder="Own Office"
+              allowClear
+              value={filters.ownOffice}
+              onChange={(value) => handleFilterChange("ownOffice", value)}
+              className="w-full"
+            >
+              <Option value="true">Yes</Option>
+              <Option value="false">No</Option>
+            </Select>
+          </Col>
+          <Col xs={24} sm={8} md={4} lg={3} xl={3}>
             <Button
               className="w-full"
               icon={<FilterOutlined />}
@@ -477,11 +518,11 @@ const Terminals = () => {
               Clear
             </Button>
           </Col>
-          <Col xs={24} sm={8} md={3} lg={3} xl={3}>
+          <Col xs={24} sm={8} md={4} lg={3} xl={3}>
             <Button
               className="w-full"
               icon={<ReloadOutlined />}
-              onClick={fetchTerminals}
+              onClick={fetchAgents}
             >
               Refresh
             </Button>
@@ -489,11 +530,11 @@ const Terminals = () => {
         </Row>
       </Card>
 
-      {/* Terminals Table */}
+      {/* Agents Table */}
       <Card>
         <Table
           columns={columns}
-          dataSource={terminals}
+          dataSource={agents}
           rowKey="id"
           loading={loading}
           pagination={pagination}
@@ -502,15 +543,15 @@ const Terminals = () => {
         />
       </Card>
 
-      {/* Terminal Form Modal */}
+      {/* Agent Form Modal */}
       <FormModal
         visible={isModalVisible}
         onCancel={closeModal}
-        title={modalMode === "create" ? "Create New Terminal" : "Edit Terminal"}
-        width={800}
+        title={modalMode === "create" ? "Create New Agent" : "Edit Agent"}
+        width={900}
       >
-        <TerminalForm
-          initialValues={selectedTerminal}
+        <AgentForm
+          initialValues={selectedAgent}
           onSubmit={handleFormSubmit}
           onCancel={closeModal}
           isLoading={formLoading}
@@ -520,4 +561,4 @@ const Terminals = () => {
   );
 };
 
-export default Terminals;
+export default Agents;

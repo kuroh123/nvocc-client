@@ -85,20 +85,78 @@ const MainLayout = () => {
           icon: <TeamOutlined />,
           label: <Link to="/customers">Customers</Link>,
         },
+
         {
-          key: "ports",
+          key: "master",
           icon: <DatabaseOutlined />,
-          label: <Link to="/ports">Ports</Link>,
-        },
-        {
-          key: "terminals",
-          icon: <DatabaseOutlined />,
-          label: <Link to="/terminals">Terminals</Link>,
-        },
-        {
-          key: "depots",
-          icon: <ContainerOutlined />,
-          label: <Link to="/depots">Depots</Link>,
+          label: "Master",
+          children: [
+            {
+              key: "ports",
+              icon: <DatabaseOutlined />,
+              label: <Link to="/ports">Ports</Link>,
+            },
+            {
+              key: "terminals",
+              icon: <DatabaseOutlined />,
+              label: <Link to="/terminals">Terminals</Link>,
+            },
+            {
+              key: "agents",
+              icon: <DatabaseOutlined />,
+              label: <Link to="/agents">Agents</Link>,
+            },
+            {
+              key: "cargo",
+              icon: <DatabaseOutlined />,
+              label: <Link to="/cargo">Cargo</Link>,
+            },
+            {
+              key: "operators",
+              icon: <DatabaseOutlined />,
+              label: <Link to="/operators">Operators</Link>,
+            },
+            {
+              key: "vessels",
+              icon: <DatabaseOutlined />,
+              label: <Link to="/vessels">Vessels</Link>,
+            },
+            {
+              key: "vessel-schedules",
+              icon: <DatabaseOutlined />,
+              label: <Link to="/vessel-schedules">Vessel Schedules</Link>,
+            },
+            {
+              key: "charges",
+              icon: <DatabaseOutlined />,
+              label: <Link to="/charges">Charges</Link>,
+            },
+            {
+              key: "depots",
+              icon: <DatabaseOutlined />,
+              label: <Link to="/depots">Depots</Link>,
+            },
+            {
+              key: "commodities",
+              icon: <DatabaseOutlined />,
+              label: <Link to="/commodities">Commodities</Link>,
+            },
+            {
+              key: "container-types",
+              icon: <DatabaseOutlined />,
+              label: <Link to="/container-types">Container Types</Link>,
+            },
+            {
+              key: "bank-accounts",
+              icon: <DatabaseOutlined />,
+              label: <Link to="/bank-accounts">Bank Accounts</Link>,
+            },
+            {
+              key: "tariffs",
+              icon: <DatabaseOutlined />,
+              label: <Link to="/tariffs">Tariffs</Link>,
+            },
+          ],
         },
         {
           key: "admin",

@@ -55,14 +55,14 @@ const LoginPage = () => {
   const demoCredentials = [
     {
       role: "Admin",
-      email: "firsttenantadmin@nvocc.com",
+      email: "admin@nvocc.com",
       password: "Admin@123",
     },
-    {
-      role: "Admin",
-      email: "secondtenantadmin@nvocc.com",
-      password: "Admin@123",
-    },
+    // {
+    //   role: "Admin",
+    //   email: "secondtenantadmin@nvocc.com",
+    //   password: "Admin@123",
+    // },
     { role: "Customer", email: "customer@test.com", password: "Customer@123" },
     { role: "Sales", email: "sales@test.com", password: "Sales@123" },
     { role: "Multi-role", email: "multiuser@test.com", password: "Multi@123" },

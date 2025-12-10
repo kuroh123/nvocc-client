@@ -23,36 +23,36 @@ import {
   EyeOutlined,
   EditOutlined,
   DeleteOutlined,
-  ContainerOutlined,
+  HomeOutlined,
   GlobalOutlined,
   FilterOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
 import FormModal from "../components/common/FormModal";
-import TerminalForm from "../components/forms/terminalForm";
-import terminalService from "../services/terminalService";
+import DepotForm from "../components/forms/DepotForm";
+import depotService from "../services/depotService";
 import portService from "../services/portService";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
 const { Option } = Select;
 
-const Terminals = () => {
+const Depots = () => {
   const { hasPermission, hasRole, activeRole } = useAuth();
 
-  // Check if user can perform terminal operations based on roles
-  const canCreateTerminal =
-    hasPermission("terminals:create") ||
+  // Check if user can perform depot operations based on roles
+  const canCreateDepot =
+    hasPermission("depots:create") ||
     ["ADMIN", "PORT", "MASTER_PORT"].includes(activeRole);
-  const canEditTerminal =
-    hasPermission("terminals:update") ||
+  const canEditDepot =
+    hasPermission("depots:update") ||
     ["ADMIN", "PORT", "MASTER_PORT"].includes(activeRole);
-  const canDeleteTerminal =
-    hasPermission("terminals:delete") ||
+  const canDeleteDepot =
+    hasPermission("depots:delete") ||
     ["ADMIN", "MASTER_PORT"].includes(activeRole);
 
   const [loading, setLoading] = useState(false);
-  const [terminals, setTerminals] = useState([]);
+  const [depots, setDepots] = useState([]);
   const [ports, setPorts] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -65,15 +65,15 @@ const Terminals = () => {
 
   // Filter states
   const [filters, setFilters] = useState({
-    status: undefined,
-    search: undefined,
-    portId: undefined,
+    search: "",
+    status: "",
+    portId: "",
   });
 
   // Modal states
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState("create"); // create or edit
-  const [selectedTerminal, setSelectedTerminal] = useState(null);
+  const [selectedDepot, setSelectedDepot] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
 
   // Stats
@@ -84,11 +84,11 @@ const Terminals = () => {
   });
 
   useEffect(() => {
-    fetchTerminals();
+    fetchDepots();
     fetchPorts();
   }, [pagination.current, pagination.pageSize, filters]);
 
-  const fetchTerminals = async () => {
+  const fetchDepots = async () => {
     try {
       setLoading(true);
       const params = {
@@ -99,19 +99,15 @@ const Terminals = () => {
 
       // Remove empty filters
       Object.keys(params).forEach((key) => {
-        if (
-          params[key] === "" ||
-          params[key] === undefined ||
-          params[key] === null
-        ) {
+        if (params[key] === "") {
           delete params[key];
         }
       });
 
-      const response = await terminalService.getAllTerminals(params);
+      const response = await depotService.getAllDepots(params);
 
       if (response.success) {
-        setTerminals(response.data || []);
+        setDepots(response.data || []);
         setPagination((prev) => ({
           ...prev,
           total: response.pagination?.total || 0,
@@ -120,11 +116,11 @@ const Terminals = () => {
         // Update stats
         updateStats(response.data || []);
       } else {
-        message.error("Failed to fetch terminals");
+        message.error("Failed to fetch depots");
       }
     } catch (error) {
-      console.error("Error fetching terminals:", error);
-      message.error("Failed to fetch terminals");
+      console.error("Error fetching depots:", error);
+      message.error("Failed to fetch depots");
     } finally {
       setLoading(false);
     }
@@ -145,13 +141,13 @@ const Terminals = () => {
     }
   };
 
-  const updateStats = (terminalsData) => {
-    const total = terminalsData.length;
-    const active = terminalsData.filter(
-      (terminal) => terminal.status === "ACTIVE"
+  const updateStats = (depotsData) => {
+    const total = depotsData.length;
+    const active = depotsData.filter(
+      (depot) => depot.status === "ACTIVE"
     ).length;
-    const inactive = terminalsData.filter(
-      (terminal) => terminal.status === "INACTIVE"
+    const inactive = depotsData.filter(
+      (depot) => depot.status === "INACTIVE"
     ).length;
 
     setStats({ total, active, inactive });
@@ -177,28 +173,28 @@ const Terminals = () => {
 
   const clearFilters = () => {
     setFilters({
-      search: undefined,
-      status: undefined,
-      portId: undefined,
+      search: "",
+      status: "",
+      portId: "",
     });
     setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
   const openCreateModal = () => {
     setModalMode("create");
-    setSelectedTerminal(null);
+    setSelectedDepot(null);
     setIsModalVisible(true);
   };
 
-  const openEditModal = (terminal) => {
+  const openEditModal = (depot) => {
     setModalMode("edit");
-    setSelectedTerminal(terminal);
+    setSelectedDepot(depot);
     setIsModalVisible(true);
   };
 
   const closeModal = () => {
     setIsModalVisible(false);
-    setSelectedTerminal(null);
+    setSelectedDepot(null);
   };
 
   const handleFormSubmit = async (values) => {
@@ -207,26 +203,23 @@ const Terminals = () => {
       let response;
 
       if (modalMode === "create") {
-        response = await terminalService.createTerminal(values);
-        message.success("Terminal created successfully");
+        response = await depotService.createDepot(values);
+        message.success("Depot created successfully");
       } else {
-        response = await terminalService.updateTerminal(
-          selectedTerminal.id,
-          values
-        );
-        message.success("Terminal updated successfully");
+        response = await depotService.updateDepot(selectedDepot.id, values);
+        message.success("Depot updated successfully");
       }
 
       if (response.success) {
         closeModal();
-        fetchTerminals();
+        fetchDepots();
       }
     } catch (error) {
       console.error(
-        `Error ${modalMode === "create" ? "creating" : "updating"} terminal:`,
+        `Error ${modalMode === "create" ? "creating" : "updating"} depot:`,
         error
       );
-      message.error(error.message || `Failed to ${modalMode} terminal`);
+      message.error(error.message || `Failed to ${modalMode} depot`);
     } finally {
       setFormLoading(false);
     }
@@ -234,14 +227,14 @@ const Terminals = () => {
 
   const handleDelete = async (id) => {
     try {
-      const response = await terminalService.deleteTerminal(id);
+      const response = await depotService.deleteDepot(id);
       if (response.success) {
-        message.success("Terminal deleted successfully");
-        fetchTerminals();
+        message.success("Depot deleted successfully");
+        fetchDepots();
       }
     } catch (error) {
-      console.error("Error deleting terminal:", error);
-      message.error(error.message || "Failed to delete terminal");
+      console.error("Error deleting depot:", error);
+      message.error(error.message || "Failed to delete depot");
     }
   };
 
@@ -258,12 +251,9 @@ const Terminals = () => {
       render: (text, record) => (
         <div>
           <div className="font-medium">{text}</div>
-          {record.description && (
-            <Text type="secondary" className="text-xs">
-              {record.description.substring(0, 50)}
-              {record.description.length > 50 ? "..." : ""}
-            </Text>
-          )}
+          <Text type="secondary" className="text-xs">
+            {record.company}
+          </Text>
         </div>
       ),
     },
@@ -273,23 +263,36 @@ const Terminals = () => {
       key: "port",
       render: (text, record) => (
         <div>
-          <div>{record.port?.name}</div>
-          <Text type="secondary" className="text-xs">
-            {record.port?.portCode}
-          </Text>
+          <div>{record.port?.name || "-"}</div>
+          {record.port?.portCode && (
+            <Text type="secondary" className="text-xs">
+              {record.port.portCode}
+            </Text>
+          )}
         </div>
       ),
     },
     {
-      title: "Country",
-      dataIndex: ["port", "country", "name"],
-      key: "country",
-      render: (text, record) => (
+      title: "Location",
+      key: "location",
+      render: (_, record) => (
         <div>
-          <div>{record.port?.country?.name}</div>
-          <Text type="secondary" className="text-xs">
-            {record.port?.country?.codeChar2}
-          </Text>
+          {record.city && <div className="text-sm">{record.city}</div>}
+          {record.country?.name && (
+            <Text type="secondary" className="text-xs">
+              {record.country.name}
+            </Text>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: "Tax Details",
+      key: "taxDetails",
+      render: (_, record) => (
+        <div>
+          {record.gstNum && <div className="text-xs">GST: {record.gstNum}</div>}
+          {record.panNum && <div className="text-xs">PAN: {record.panNum}</div>}
         </div>
       ),
     },
@@ -307,10 +310,8 @@ const Terminals = () => {
       title: "Created",
       dataIndex: "createdAt",
       key: "createdAt",
-      render: (date) => {
-        if (!date) return "-";
-        return new Date(date).toLocaleDateString();
-      },
+      render: (date) => new Date(date).toLocaleDateString(),
+      sorter: true,
     },
     {
       title: "Actions",
@@ -320,7 +321,7 @@ const Terminals = () => {
           <Tooltip title="View Details">
             <Button type="link" icon={<EyeOutlined />} size="small" />
           </Tooltip>
-          {canEditTerminal && (
+          {canEditDepot && (
             <Tooltip title="Edit">
               <Button
                 type="link"
@@ -330,10 +331,10 @@ const Terminals = () => {
               />
             </Tooltip>
           )}
-          {canDeleteTerminal && (
+          {canDeleteDepot && (
             <Tooltip title="Delete">
               <Popconfirm
-                title="Are you sure you want to delete this terminal?"
+                title="Are you sure you want to delete this depot?"
                 description="This action cannot be undone."
                 onConfirm={() => handleDelete(record.id)}
                 okText="Yes"
@@ -362,28 +363,28 @@ const Terminals = () => {
           <Col>
             <Space>
               <Avatar
-                icon={<ContainerOutlined />}
-                style={{ backgroundColor: "#1890ff" }}
+                icon={<HomeOutlined />}
+                style={{ backgroundColor: "#eb2f96" }}
                 size="large"
               />
               <div>
                 <Title level={2} style={{ margin: 0 }}>
-                  Terminal Management
+                  Depot Management
                 </Title>
                 <Text type="secondary">
-                  Manage and monitor terminals across different ports
+                  Manage and monitor depots across different ports and regions
                 </Text>
               </div>
             </Space>
           </Col>
-          {canCreateTerminal && (
+          {canCreateDepot && (
             <Col>
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={openCreateModal}
               >
-                Add Terminal
+                Add Depot
               </Button>
             </Col>
           )}
@@ -395,16 +396,16 @@ const Terminals = () => {
         <Col span={8}>
           <Card>
             <Statistic
-              title="Total Terminals"
+              title="Total Depots"
               value={pagination.total}
-              prefix={<ContainerOutlined />}
+              prefix={<HomeOutlined />}
             />
           </Card>
         </Col>
         <Col span={8}>
           <Card>
             <Statistic
-              title="Active Terminals"
+              title="Active Depots"
               value={stats.active}
               valueStyle={{ color: "#52c41a" }}
               prefix={<GlobalOutlined />}
@@ -414,7 +415,7 @@ const Terminals = () => {
         <Col span={8}>
           <Card>
             <Statistic
-              title="Inactive Terminals"
+              title="Inactive Depots"
               value={stats.inactive}
               valueStyle={{ color: "#ff4d4f" }}
             />
@@ -425,33 +426,25 @@ const Terminals = () => {
       {/* Filters and Actions */}
       <Card className="mb-4">
         <Row gutter={16} align="middle">
-          <Col xs={24} sm={24} md={8} lg={8} xl={8}>
+          <Col xs={24} sm={24} md={8} lg={6} xl={6}>
             <Search
-              placeholder="Search terminals..."
+              placeholder="Search depots..."
               allowClear
               onSearch={handleSearch}
               onChange={(e) => !e.target.value && handleSearch("")}
             />
           </Col>
-          <Col xs={24} sm={8} md={6} lg={6} xl={6}>
+          <Col xs={24} sm={8} md={4} lg={4} xl={4}>
             <Select
               placeholder="All Ports"
               allowClear
               value={filters.portId}
               onChange={(value) => handleFilterChange("portId", value)}
               className="w-full"
-              showSearch
-              filterOption={(input, option) => {
-                const port = ports.find((p) => p.id === option.value);
-                if (!port) return false;
-                const searchableText =
-                  `${port.name} ${port.portCode}`.toLowerCase();
-                return searchableText.indexOf(input.toLowerCase()) >= 0;
-              }}
             >
               {ports.map((port) => (
                 <Option key={port.id} value={port.id}>
-                  {port.name} ({port.portCode})
+                  {port.name}
                 </Option>
               ))}
             </Select>
@@ -468,7 +461,7 @@ const Terminals = () => {
               <Option value="INACTIVE">Inactive</Option>
             </Select>
           </Col>
-          <Col xs={24} sm={8} md={3} lg={3} xl={3}>
+          <Col xs={24} sm={8} md={4} lg={4} xl={4}>
             <Button
               className="w-full"
               icon={<FilterOutlined />}
@@ -477,11 +470,11 @@ const Terminals = () => {
               Clear
             </Button>
           </Col>
-          <Col xs={24} sm={8} md={3} lg={3} xl={3}>
+          <Col xs={24} sm={8} md={4} lg={4} xl={4}>
             <Button
               className="w-full"
               icon={<ReloadOutlined />}
-              onClick={fetchTerminals}
+              onClick={fetchDepots}
             >
               Refresh
             </Button>
@@ -489,11 +482,11 @@ const Terminals = () => {
         </Row>
       </Card>
 
-      {/* Terminals Table */}
+      {/* Depots Table */}
       <Card>
         <Table
           columns={columns}
-          dataSource={terminals}
+          dataSource={depots}
           rowKey="id"
           loading={loading}
           pagination={pagination}
@@ -502,15 +495,15 @@ const Terminals = () => {
         />
       </Card>
 
-      {/* Terminal Form Modal */}
+      {/* Depot Form Modal */}
       <FormModal
         visible={isModalVisible}
         onCancel={closeModal}
-        title={modalMode === "create" ? "Create New Terminal" : "Edit Terminal"}
-        width={800}
+        title={modalMode === "create" ? "Create New Depot" : "Edit Depot"}
+        width={900}
       >
-        <TerminalForm
-          initialValues={selectedTerminal}
+        <DepotForm
+          initialValues={selectedDepot}
           onSubmit={handleFormSubmit}
           onCancel={closeModal}
           isLoading={formLoading}
@@ -520,4 +513,4 @@ const Terminals = () => {
   );
 };
 
-export default Terminals;
+export default Depots;

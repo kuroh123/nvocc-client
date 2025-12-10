@@ -23,37 +23,36 @@ import {
   EyeOutlined,
   EditOutlined,
   DeleteOutlined,
-  ContainerOutlined,
-  GlobalOutlined,
+  TagsOutlined,
   FilterOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
 import FormModal from "../components/common/FormModal";
-import TerminalForm from "../components/forms/terminalForm";
-import terminalService from "../services/terminalService";
-import portService from "../services/portService";
+import CommodityForm from "../components/forms/CommodityForm";
+import commodityService from "../services/commodityService";
+import cargoService from "../services/cargoService";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
 const { Option } = Select;
 
-const Terminals = () => {
-  const { hasPermission, hasRole, activeRole } = useAuth();
+const Commodities = () => {
+  const { hasPermission, activeRole } = useAuth();
 
-  // Check if user can perform terminal operations based on roles
-  const canCreateTerminal =
-    hasPermission("terminals:create") ||
-    ["ADMIN", "PORT", "MASTER_PORT"].includes(activeRole);
-  const canEditTerminal =
-    hasPermission("terminals:update") ||
-    ["ADMIN", "PORT", "MASTER_PORT"].includes(activeRole);
-  const canDeleteTerminal =
-    hasPermission("terminals:delete") ||
-    ["ADMIN", "MASTER_PORT"].includes(activeRole);
+  // Check if user can perform commodity operations based on roles
+  const canCreateCommodity =
+    hasPermission("commodities:create") ||
+    ["ADMIN", "CARGO", "MASTER_CARGO"].includes(activeRole);
+  const canEditCommodity =
+    hasPermission("commodities:update") ||
+    ["ADMIN", "CARGO", "MASTER_CARGO"].includes(activeRole);
+  const canDeleteCommodity =
+    hasPermission("commodities:delete") ||
+    ["ADMIN", "MASTER_CARGO"].includes(activeRole);
 
   const [loading, setLoading] = useState(false);
-  const [terminals, setTerminals] = useState([]);
-  const [ports, setPorts] = useState([]);
+  const [commodities, setCommodities] = useState([]);
+  const [cargos, setCargos] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -65,15 +64,15 @@ const Terminals = () => {
 
   // Filter states
   const [filters, setFilters] = useState({
-    status: undefined,
-    search: undefined,
-    portId: undefined,
+    search: "",
+    status: "",
+    cargoId: "",
   });
 
   // Modal states
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState("create"); // create or edit
-  const [selectedTerminal, setSelectedTerminal] = useState(null);
+  const [selectedCommodity, setSelectedCommodity] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
 
   // Stats
@@ -84,11 +83,11 @@ const Terminals = () => {
   });
 
   useEffect(() => {
-    fetchTerminals();
-    fetchPorts();
+    fetchCommodities();
+    fetchCargos();
   }, [pagination.current, pagination.pageSize, filters]);
 
-  const fetchTerminals = async () => {
+  const fetchCommodities = async () => {
     try {
       setLoading(true);
       const params = {
@@ -99,19 +98,16 @@ const Terminals = () => {
 
       // Remove empty filters
       Object.keys(params).forEach((key) => {
-        if (
-          params[key] === "" ||
-          params[key] === undefined ||
-          params[key] === null
-        ) {
+        if (params[key] === "") {
           delete params[key];
         }
       });
 
-      const response = await terminalService.getAllTerminals(params);
+      const response = await commodityService.getAllCommodities(params);
+      console.log(response);
 
       if (response.success) {
-        setTerminals(response.data || []);
+        setCommodities(response.data || []);
         setPagination((prev) => ({
           ...prev,
           total: response.pagination?.total || 0,
@@ -120,38 +116,38 @@ const Terminals = () => {
         // Update stats
         updateStats(response.data || []);
       } else {
-        message.error("Failed to fetch terminals");
+        message.error("Failed to fetch commodities");
       }
     } catch (error) {
-      console.error("Error fetching terminals:", error);
-      message.error("Failed to fetch terminals");
+      console.error("Error fetching commodities:", error);
+      message.error("Failed to fetch commodities");
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchPorts = async () => {
+  const fetchCargos = async () => {
     try {
-      const response = await portService.getAllPorts({
+      const response = await cargoService.getAllCargo({
         status: "ACTIVE",
         limit: 1000,
       });
 
       if (response.success) {
-        setPorts(response.data || []);
+        setCargos(response.data || []);
       }
     } catch (error) {
-      console.error("Error fetching ports:", error);
+      console.error("Error fetching cargos:", error);
     }
   };
 
-  const updateStats = (terminalsData) => {
-    const total = terminalsData.length;
-    const active = terminalsData.filter(
-      (terminal) => terminal.status === "ACTIVE"
+  const updateStats = (commoditiesData) => {
+    const total = commoditiesData.length;
+    const active = commoditiesData.filter(
+      (commodity) => commodity.status === "ACTIVE"
     ).length;
-    const inactive = terminalsData.filter(
-      (terminal) => terminal.status === "INACTIVE"
+    const inactive = commoditiesData.filter(
+      (commodity) => commodity.status === "INACTIVE"
     ).length;
 
     setStats({ total, active, inactive });
@@ -177,28 +173,28 @@ const Terminals = () => {
 
   const clearFilters = () => {
     setFilters({
-      search: undefined,
-      status: undefined,
-      portId: undefined,
+      search: "",
+      status: "",
+      cargoId: "",
     });
     setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
   const openCreateModal = () => {
     setModalMode("create");
-    setSelectedTerminal(null);
+    setSelectedCommodity(null);
     setIsModalVisible(true);
   };
 
-  const openEditModal = (terminal) => {
+  const openEditModal = (commodity) => {
     setModalMode("edit");
-    setSelectedTerminal(terminal);
+    setSelectedCommodity(commodity);
     setIsModalVisible(true);
   };
 
   const closeModal = () => {
     setIsModalVisible(false);
-    setSelectedTerminal(null);
+    setSelectedCommodity(null);
   };
 
   const handleFormSubmit = async (values) => {
@@ -207,26 +203,26 @@ const Terminals = () => {
       let response;
 
       if (modalMode === "create") {
-        response = await terminalService.createTerminal(values);
-        message.success("Terminal created successfully");
+        response = await commodityService.createCommodity(values);
+        message.success("Commodity created successfully");
       } else {
-        response = await terminalService.updateTerminal(
-          selectedTerminal.id,
+        response = await commodityService.updateCommodity(
+          selectedCommodity.id,
           values
         );
-        message.success("Terminal updated successfully");
+        message.success("Commodity updated successfully");
       }
 
       if (response.success) {
         closeModal();
-        fetchTerminals();
+        fetchCommodities();
       }
     } catch (error) {
       console.error(
-        `Error ${modalMode === "create" ? "creating" : "updating"} terminal:`,
+        `Error ${modalMode === "create" ? "creating" : "updating"} commodity:`,
         error
       );
-      message.error(error.message || `Failed to ${modalMode} terminal`);
+      message.error(error.message || `Failed to ${modalMode} commodity`);
     } finally {
       setFormLoading(false);
     }
@@ -234,14 +230,14 @@ const Terminals = () => {
 
   const handleDelete = async (id) => {
     try {
-      const response = await terminalService.deleteTerminal(id);
+      const response = await commodityService.deleteCommodity(id);
       if (response.success) {
-        message.success("Terminal deleted successfully");
-        fetchTerminals();
+        message.success("Commodity deleted successfully");
+        fetchCommodities();
       }
     } catch (error) {
-      console.error("Error deleting terminal:", error);
-      message.error(error.message || "Failed to delete terminal");
+      console.error("Error deleting commodity:", error);
+      message.error(error.message || "Failed to delete commodity");
     }
   };
 
@@ -258,40 +254,41 @@ const Terminals = () => {
       render: (text, record) => (
         <div>
           <div className="font-medium">{text}</div>
-          {record.description && (
+          {record.code && (
             <Text type="secondary" className="text-xs">
-              {record.description.substring(0, 50)}
-              {record.description.length > 50 ? "..." : ""}
+              Code: {record.code}
             </Text>
           )}
         </div>
       ),
     },
     {
-      title: "Port",
-      dataIndex: ["port", "name"],
-      key: "port",
+      title: "Cargo",
+      dataIndex: ["cargo", "name"],
+      key: "cargo",
       render: (text, record) => (
         <div>
-          <div>{record.port?.name}</div>
-          <Text type="secondary" className="text-xs">
-            {record.port?.portCode}
-          </Text>
+          <div>{record.cargo?.name}</div>
+          {record.cargo?.code && (
+            <Text type="secondary" className="text-xs">
+              Code: {record.cargo?.code}
+            </Text>
+          )}
         </div>
       ),
     },
     {
-      title: "Country",
-      dataIndex: ["port", "country", "name"],
-      key: "country",
-      render: (text, record) => (
-        <div>
-          <div>{record.port?.country?.name}</div>
-          <Text type="secondary" className="text-xs">
-            {record.port?.country?.codeChar2}
-          </Text>
-        </div>
-      ),
+      title: "Description",
+      dataIndex: "description",
+      key: "description",
+      render: (text) =>
+        text ? (
+          <div className="max-w-xs">
+            {text.length > 50 ? `${text.substring(0, 50)}...` : text}
+          </div>
+        ) : (
+          "-"
+        ),
     },
     {
       title: "Status",
@@ -320,7 +317,7 @@ const Terminals = () => {
           <Tooltip title="View Details">
             <Button type="link" icon={<EyeOutlined />} size="small" />
           </Tooltip>
-          {canEditTerminal && (
+          {canEditCommodity && (
             <Tooltip title="Edit">
               <Button
                 type="link"
@@ -330,10 +327,10 @@ const Terminals = () => {
               />
             </Tooltip>
           )}
-          {canDeleteTerminal && (
+          {canDeleteCommodity && (
             <Tooltip title="Delete">
               <Popconfirm
-                title="Are you sure you want to delete this terminal?"
+                title="Are you sure you want to delete this commodity?"
                 description="This action cannot be undone."
                 onConfirm={() => handleDelete(record.id)}
                 okText="Yes"
@@ -362,28 +359,28 @@ const Terminals = () => {
           <Col>
             <Space>
               <Avatar
-                icon={<ContainerOutlined />}
-                style={{ backgroundColor: "#1890ff" }}
+                icon={<TagsOutlined />}
+                style={{ backgroundColor: "#52c41a" }}
                 size="large"
               />
               <div>
                 <Title level={2} style={{ margin: 0 }}>
-                  Terminal Management
+                  Commodity Management
                 </Title>
                 <Text type="secondary">
-                  Manage and monitor terminals across different ports
+                  Manage and monitor commodities across different cargo types
                 </Text>
               </div>
             </Space>
           </Col>
-          {canCreateTerminal && (
+          {canCreateCommodity && (
             <Col>
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={openCreateModal}
               >
-                Add Terminal
+                Add Commodity
               </Button>
             </Col>
           )}
@@ -395,26 +392,25 @@ const Terminals = () => {
         <Col span={8}>
           <Card>
             <Statistic
-              title="Total Terminals"
+              title="Total Commodities"
               value={pagination.total}
-              prefix={<ContainerOutlined />}
+              prefix={<TagsOutlined />}
             />
           </Card>
         </Col>
         <Col span={8}>
           <Card>
             <Statistic
-              title="Active Terminals"
+              title="Active Commodities"
               value={stats.active}
               valueStyle={{ color: "#52c41a" }}
-              prefix={<GlobalOutlined />}
             />
           </Card>
         </Col>
         <Col span={8}>
           <Card>
             <Statistic
-              title="Inactive Terminals"
+              title="Inactive Commodities"
               value={stats.inactive}
               valueStyle={{ color: "#ff4d4f" }}
             />
@@ -427,7 +423,7 @@ const Terminals = () => {
         <Row gutter={16} align="middle">
           <Col xs={24} sm={24} md={8} lg={8} xl={8}>
             <Search
-              placeholder="Search terminals..."
+              placeholder="Search commodities..."
               allowClear
               onSearch={handleSearch}
               onChange={(e) => !e.target.value && handleSearch("")}
@@ -435,23 +431,24 @@ const Terminals = () => {
           </Col>
           <Col xs={24} sm={8} md={6} lg={6} xl={6}>
             <Select
-              placeholder="All Ports"
+              placeholder="All Cargos"
               allowClear
-              value={filters.portId}
-              onChange={(value) => handleFilterChange("portId", value)}
+              value={filters.cargoId}
+              onChange={(value) => handleFilterChange("cargoId", value)}
               className="w-full"
               showSearch
               filterOption={(input, option) => {
-                const port = ports.find((p) => p.id === option.value);
-                if (!port) return false;
-                const searchableText =
-                  `${port.name} ${port.portCode}`.toLowerCase();
+                const cargo = cargos.find((c) => c.id === option.value);
+                if (!cargo) return false;
+                const searchableText = `${cargo.name} ${
+                  cargo.code || ""
+                }`.toLowerCase();
                 return searchableText.indexOf(input.toLowerCase()) >= 0;
               }}
             >
-              {ports.map((port) => (
-                <Option key={port.id} value={port.id}>
-                  {port.name} ({port.portCode})
+              {cargos.map((cargo) => (
+                <Option key={cargo.id} value={cargo.id}>
+                  {cargo.name} {cargo.code && `(${cargo.code})`}
                 </Option>
               ))}
             </Select>
@@ -481,7 +478,7 @@ const Terminals = () => {
             <Button
               className="w-full"
               icon={<ReloadOutlined />}
-              onClick={fetchTerminals}
+              onClick={fetchCommodities}
             >
               Refresh
             </Button>
@@ -489,11 +486,11 @@ const Terminals = () => {
         </Row>
       </Card>
 
-      {/* Terminals Table */}
+      {/* Commodities Table */}
       <Card>
         <Table
           columns={columns}
-          dataSource={terminals}
+          dataSource={commodities}
           rowKey="id"
           loading={loading}
           pagination={pagination}
@@ -502,15 +499,17 @@ const Terminals = () => {
         />
       </Card>
 
-      {/* Terminal Form Modal */}
+      {/* Commodity Form Modal */}
       <FormModal
         visible={isModalVisible}
         onCancel={closeModal}
-        title={modalMode === "create" ? "Create New Terminal" : "Edit Terminal"}
+        title={
+          modalMode === "create" ? "Create New Commodity" : "Edit Commodity"
+        }
         width={800}
       >
-        <TerminalForm
-          initialValues={selectedTerminal}
+        <CommodityForm
+          initialValues={selectedCommodity}
           onSubmit={handleFormSubmit}
           onCancel={closeModal}
           isLoading={formLoading}
@@ -520,4 +519,4 @@ const Terminals = () => {
   );
 };
 
-export default Terminals;
+export default Commodities;

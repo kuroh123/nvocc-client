@@ -66,9 +66,9 @@ const Ports = () => {
   // Filter states
   const [filters, setFilters] = useState({
     search: "",
-    status: "",
-    portType: "",
-    countryId: "",
+    status: undefined,
+    portType: undefined,
+    countryId: undefined,
   });
 
   // Modal states
@@ -101,12 +101,17 @@ const Ports = () => {
 
       // Remove empty filters
       Object.keys(params).forEach((key) => {
-        if (params[key] === "") {
+        if (
+          params[key] === "" ||
+          params[key] === undefined ||
+          params[key] === null
+        ) {
           delete params[key];
         }
       });
 
       const response = await portService.getAllPorts(params);
+      console.log(response);
 
       if (response.success) {
         setPorts(response.data || []);
@@ -177,9 +182,9 @@ const Ports = () => {
   const clearFilters = () => {
     setFilters({
       search: "",
-      status: "",
-      portType: "",
-      countryId: "",
+      status: undefined,
+      portType: undefined,
+      countryId: undefined,
     });
     setPagination((prev) => ({ ...prev, current: 1 }));
   };
@@ -418,7 +423,7 @@ const Ports = () => {
       </Card>
 
       {/* Statistics Cards */}
-      {/* <Row gutter={16} className="mb-6">
+      <Row gutter={16} className="mb-6">
         <Col span={6}>
           <Card>
             <Statistic
@@ -456,7 +461,7 @@ const Ports = () => {
             />
           </Card>
         </Col>
-      </Row> */}
+      </Row>
 
       {/* Filters and Actions */}
       <Card className="mb-4">
