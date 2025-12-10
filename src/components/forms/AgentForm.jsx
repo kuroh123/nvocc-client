@@ -9,9 +9,11 @@ import {
   Row,
   Col,
   Switch,
+  Tabs,
 } from "antd";
 import portService from "../../services/portService";
 import countryService from "../../services/countryService";
+import DocumentUpload from "../common/DocumentUpload";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -136,193 +138,241 @@ const AgentForm = ({
         ownOffice: false,
       }}
     >
-      <Row gutter={16}>
-        <Col xs={24} sm={12}>
-          <Form.Item
-            label="Agent Name"
-            name="name"
-            rules={[
-              { required: true, message: "Please enter agent name" },
-              { min: 2, message: "Name must be at least 2 characters" },
-            ]}
-          >
-            <Input placeholder="Enter agent name" />
-          </Form.Item>
-        </Col>
-        <Col xs={24} sm={12}>
-          <Form.Item
-            label="Company Name"
-            name="companyName"
-            rules={[
-              { required: true, message: "Please enter company name" },
-              { min: 2, message: "Company name must be at least 2 characters" },
-            ]}
-          >
-            <Input placeholder="Enter company name" />
-          </Form.Item>
-        </Col>
-      </Row>
+      <Tabs
+        defaultActiveKey="1"
+        items={[
+          {
+            key: "1",
+            label: "Basic Information",
+            children: (
+              <>
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      label="Agent Name"
+                      name="name"
+                      rules={[
+                        { required: true, message: "Please enter agent name" },
+                        {
+                          min: 2,
+                          message: "Name must be at least 2 characters",
+                        },
+                      ]}
+                    >
+                      <Input placeholder="Enter agent name" />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      label="Company Name"
+                      name="companyName"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please enter company name",
+                        },
+                        {
+                          min: 2,
+                          message: "Company name must be at least 2 characters",
+                        },
+                      ]}
+                    >
+                      <Input placeholder="Enter company name" />
+                    </Form.Item>
+                  </Col>
+                </Row>
 
-      <Row gutter={16}>
-        <Col xs={24} sm={12}>
-          <Form.Item
-            label="Email"
-            name="email"
-            rules={[
-              { required: true, message: "Please enter email" },
-              { type: "email", message: "Please enter a valid email" },
-            ]}
-          >
-            <Input placeholder="Enter email address" />
-          </Form.Item>
-        </Col>
-        <Col xs={24} sm={12}>
-          <Form.Item label="Port" name="portId">
-            <Select
-              placeholder="Select a port"
-              allowClear
-              loading={loadingPorts}
-              showSearch
-              optionFilterProp="children"
-            >
-              {ports.map((port) => (
-                <Option key={port.id} value={port.id}>
-                  {port.name} ({port.portCode})
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </Col>
-      </Row>
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      label="Email"
+                      name="email"
+                      rules={[
+                        { required: true, message: "Please enter email" },
+                        {
+                          type: "email",
+                          message: "Please enter a valid email",
+                        },
+                      ]}
+                    >
+                      <Input placeholder="Enter email address" />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <Form.Item label="Port" name="portId">
+                      <Select
+                        placeholder="Select a port"
+                        allowClear
+                        loading={loadingPorts}
+                        showSearch
+                        optionFilterProp="children"
+                      >
+                        {ports.map((port) => (
+                          <Option key={port.id} value={port.id}>
+                            {port.name} ({port.portCode})
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                </Row>
 
-      <Row gutter={16}>
-        <Col xs={24} sm={12}>
-          <Form.Item label="Mobile Number" name="mobNum">
-            <Input placeholder="Enter mobile number" />
-          </Form.Item>
-        </Col>
-        <Col xs={24} sm={12}>
-          <Form.Item label="Telephone Number" name="telNum">
-            <Input placeholder="Enter telephone number" />
-          </Form.Item>
-        </Col>
-      </Row>
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item label="Mobile Number" name="mobNum">
+                      <Input placeholder="Enter mobile number" />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <Form.Item label="Telephone Number" name="telNum">
+                      <Input placeholder="Enter telephone number" />
+                    </Form.Item>
+                  </Col>
+                </Row>
 
-      <Row gutter={16}>
-        <Col xs={24} sm={12}>
-          <Form.Item label="Address Line 1" name="addressLine1">
-            <Input placeholder="Enter address line 1" />
-          </Form.Item>
-        </Col>
-        <Col xs={24} sm={12}>
-          <Form.Item label="Address Line 2" name="addressLine2">
-            <Input placeholder="Enter address line 2" />
-          </Form.Item>
-        </Col>
-      </Row>
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item label="Address Line 1" name="addressLine1">
+                      <Input placeholder="Enter address line 1" />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <Form.Item label="Address Line 2" name="addressLine2">
+                      <Input placeholder="Enter address line 2" />
+                    </Form.Item>
+                  </Col>
+                </Row>
 
-      <Row gutter={16}>
-        <Col xs={24} sm={8}>
-          <Form.Item label="City" name="city">
-            <Input placeholder="Enter city" />
-          </Form.Item>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Form.Item label="ZIP Code" name="zipCode">
-            <Input placeholder="Enter ZIP code" />
-          </Form.Item>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Form.Item label="Country" name="countryId">
-            <Select
-              placeholder="Select country"
-              allowClear
-              loading={loadingCountries}
-              onChange={handleCountryChange}
-              showSearch
-              optionFilterProp="children"
-            >
-              {countries.map((country) => (
-                <Option key={country.id} value={country.id}>
-                  {country.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </Col>
-      </Row>
+                <Row gutter={16}>
+                  <Col xs={24} sm={8}>
+                    <Form.Item label="City" name="city">
+                      <Input placeholder="Enter city" />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={8}>
+                    <Form.Item label="ZIP Code" name="zipCode">
+                      <Input placeholder="Enter ZIP code" />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={8}>
+                    <Form.Item label="Country" name="countryId">
+                      <Select
+                        placeholder="Select country"
+                        allowClear
+                        loading={loadingCountries}
+                        onChange={handleCountryChange}
+                        showSearch
+                        optionFilterProp="children"
+                      >
+                        {countries.map((country) => (
+                          <Option key={country.id} value={country.id}>
+                            {country.name}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                </Row>
 
-      <Row gutter={16}>
-        <Col xs={24} sm={12}>
-          <Form.Item label="State" name="stateId">
-            <Select
-              placeholder="Select state"
-              allowClear
-              loading={loadingStates}
-              disabled={!states.length}
-              showSearch
-              optionFilterProp="children"
-            >
-              {states.map((state) => (
-                <Option key={state.id} value={state.id}>
-                  {state.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </Col>
-        <Col xs={24} sm={12}>
-          <Form.Item label="Licence Number" name="licenceNum">
-            <Input placeholder="Enter licence number" />
-          </Form.Item>
-        </Col>
-      </Row>
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item label="State" name="stateId">
+                      <Select
+                        placeholder="Select state"
+                        allowClear
+                        loading={loadingStates}
+                        disabled={!states.length}
+                        showSearch
+                        optionFilterProp="children"
+                      >
+                        {states.map((state) => (
+                          <Option key={state.id} value={state.id}>
+                            {state.name}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <Form.Item label="Licence Number" name="licenceNum">
+                      <Input placeholder="Enter licence number" />
+                    </Form.Item>
+                  </Col>
+                </Row>
 
-      <Row gutter={16}>
-        <Col xs={24} sm={12}>
-          <Form.Item label="GST Number" name="gstNum">
-            <Input placeholder="Enter GST number" />
-          </Form.Item>
-        </Col>
-        <Col xs={24} sm={12}>
-          <Form.Item label="PAN Number" name="panNum">
-            <Input placeholder="Enter PAN number" />
-          </Form.Item>
-        </Col>
-      </Row>
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item label="GST Number" name="gstNum">
+                      <Input placeholder="Enter GST number" />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <Form.Item label="PAN Number" name="panNum">
+                      <Input placeholder="Enter PAN number" />
+                    </Form.Item>
+                  </Col>
+                </Row>
 
-      <Row gutter={16}>
-        <Col xs={24} sm={12}>
-          <Form.Item label="Export Contact Details" name="expContactDetails">
-            <TextArea rows={3} placeholder="Enter export contact details" />
-          </Form.Item>
-        </Col>
-        <Col xs={24} sm={12}>
-          <Form.Item label="Import Contact Details" name="impContactDetails">
-            <TextArea rows={3} placeholder="Enter import contact details" />
-          </Form.Item>
-        </Col>
-      </Row>
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      label="Export Contact Details"
+                      name="expContactDetails"
+                    >
+                      <TextArea
+                        rows={3}
+                        placeholder="Enter export contact details"
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      label="Import Contact Details"
+                      name="impContactDetails"
+                    >
+                      <TextArea
+                        rows={3}
+                        placeholder="Enter import contact details"
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
 
-      <Row gutter={16}>
-        <Col xs={24} sm={12}>
-          <Form.Item label="Status" name="status" required>
-            <Select placeholder="Select status">
-              <Option value="ACTIVE">Active</Option>
-              <Option value="INACTIVE">Inactive</Option>
-            </Select>
-          </Form.Item>
-        </Col>
-        <Col xs={24} sm={12}>
-          <Form.Item
-            label="Own Office"
-            name="ownOffice"
-            valuePropName="checked"
-          >
-            <Switch />
-          </Form.Item>
-        </Col>
-      </Row>
+                <Row gutter={16}>
+                  <Col xs={24} sm={12}>
+                    <Form.Item label="Status" name="status" required>
+                      <Select placeholder="Select status">
+                        <Option value="ACTIVE">Active</Option>
+                        <Option value="INACTIVE">Inactive</Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      label="Own Office"
+                      name="ownOffice"
+                      valuePropName="checked"
+                    >
+                      <Switch />
+                    </Form.Item>
+                  </Col>
+                </Row>
+              </>
+            ),
+          },
+          {
+            key: "2",
+            label: "Documents",
+            children: (
+              <DocumentUpload
+                entityType="agent"
+                entityId={initialValues?.id}
+                disabled={isLoading}
+              />
+            ),
+          },
+        ]}
+      />
 
       <Form.Item className="text-right">
         <Space>
