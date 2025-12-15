@@ -23,7 +23,7 @@ import {
   EyeOutlined,
   EditOutlined,
   DeleteOutlined,
-  TagsOutlined,
+  CarOutlined,
   FilterOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
@@ -359,7 +359,7 @@ const Commodities = () => {
           <Col>
             <Space>
               <Avatar
-                icon={<TagsOutlined />}
+                icon={<CarOutlined />}
                 style={{ backgroundColor: "#52c41a" }}
                 size="large"
               />
@@ -394,7 +394,7 @@ const Commodities = () => {
             <Statistic
               title="Total Commodities"
               value={pagination.total}
-              prefix={<TagsOutlined />}
+              prefix={<CarOutlined />}
             />
           </Card>
         </Col>

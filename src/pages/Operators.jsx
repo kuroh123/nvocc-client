@@ -23,7 +23,7 @@ import {
   EyeOutlined,
   EditOutlined,
   DeleteOutlined,
-  ToolOutlined,
+  BuildOutlined,
   GlobalOutlined,
   FilterOutlined,
   ReloadOutlined,
@@ -372,7 +372,7 @@ const Operators = () => {
           <Col>
             <Space>
               <Avatar
-                icon={<ToolOutlined />}
+                icon={<BuildOutlined />}
                 style={{ backgroundColor: "#722ed1" }}
                 size="large"
               />
@@ -408,7 +408,7 @@ const Operators = () => {
             <Statistic
               title="Total Operators"
               value={pagination.total}
-              prefix={<ToolOutlined />}
+              prefix={<BuildOutlined />}
             />
           </Card>
         </Col>

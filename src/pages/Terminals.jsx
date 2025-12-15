@@ -23,13 +23,13 @@ import {
   EyeOutlined,
   EditOutlined,
   DeleteOutlined,
-  ContainerOutlined,
+  ApartmentOutlined,
   GlobalOutlined,
   FilterOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
 import FormModal from "../components/common/FormModal";
-import TerminalForm from "../components/forms/terminalForm";
+import TerminalForm from "../components/forms/TerminalForm";
 import terminalService from "../services/terminalService";
 import portService from "../services/portService";
 
@@ -362,7 +362,7 @@ const Terminals = () => {
           <Col>
             <Space>
               <Avatar
-                icon={<ContainerOutlined />}
+                icon={<ApartmentOutlined />}
                 style={{ backgroundColor: "#1890ff" }}
                 size="large"
               />
@@ -397,7 +397,7 @@ const Terminals = () => {
             <Statistic
               title="Total Terminals"
               value={pagination.total}
-              prefix={<ContainerOutlined />}
+              prefix={<ApartmentOutlined />}
             />
           </Card>
         </Col>

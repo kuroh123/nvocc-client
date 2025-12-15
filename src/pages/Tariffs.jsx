@@ -23,7 +23,7 @@ import {
   EyeOutlined,
   EditOutlined,
   DeleteOutlined,
-  DollarCircleOutlined,
+  FundOutlined,
   FilterOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
@@ -492,7 +492,7 @@ const Tariffs = () => {
           <Col>
             <Space>
               <Avatar
-                icon={<DollarCircleOutlined />}
+                icon={<FundOutlined />}
                 style={{ backgroundColor: "#f5222d" }}
                 size="large"
               />
@@ -528,7 +528,7 @@ const Tariffs = () => {
             <Statistic
               title="Total Tariffs"
               value={pagination.total}
-              prefix={<DollarCircleOutlined />}
+              prefix={<FundOutlined />}
             />
           </Card>
         </Col>

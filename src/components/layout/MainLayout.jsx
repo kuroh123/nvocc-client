@@ -29,6 +29,18 @@ import {
   SafetyOutlined,
   BarChartOutlined,
   SwapOutlined,
+  GlobalOutlined,
+  ApartmentOutlined,
+  ShopOutlined,
+  CarOutlined,
+  RocketOutlined,
+  CalendarOutlined,
+  DollarOutlined,
+  HomeOutlined,
+  InboxOutlined,
+  BuildOutlined,
+  BankOutlined,
+  FundOutlined,
 } from "@ant-design/icons";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -93,67 +105,67 @@ const MainLayout = () => {
           children: [
             {
               key: "ports",
-              icon: <DatabaseOutlined />,
+              icon: <GlobalOutlined />,
               label: <Link to="/ports">Ports</Link>,
             },
             {
               key: "terminals",
-              icon: <DatabaseOutlined />,
+              icon: <ApartmentOutlined />,
               label: <Link to="/terminals">Terminals</Link>,
             },
             {
               key: "agents",
-              icon: <DatabaseOutlined />,
+              icon: <ShopOutlined />,
               label: <Link to="/agents">Agents</Link>,
             },
             {
               key: "cargo",
-              icon: <DatabaseOutlined />,
+              icon: <InboxOutlined />,
               label: <Link to="/cargo">Cargo</Link>,
             },
             {
               key: "operators",
-              icon: <DatabaseOutlined />,
+              icon: <BuildOutlined />,
               label: <Link to="/operators">Operators</Link>,
             },
             {
               key: "vessels",
-              icon: <DatabaseOutlined />,
+              icon: <RocketOutlined />,
               label: <Link to="/vessels">Vessels</Link>,
             },
             {
               key: "vessel-schedules",
-              icon: <DatabaseOutlined />,
+              icon: <CalendarOutlined />,
               label: <Link to="/vessel-schedules">Vessel Schedules</Link>,
             },
             {
               key: "charges",
-              icon: <DatabaseOutlined />,
+              icon: <DollarOutlined />,
               label: <Link to="/charges">Charges</Link>,
             },
             {
               key: "depots",
-              icon: <DatabaseOutlined />,
+              icon: <HomeOutlined />,
               label: <Link to="/depots">Depots</Link>,
             },
             {
               key: "commodities",
-              icon: <DatabaseOutlined />,
+              icon: <CarOutlined />,
               label: <Link to="/commodities">Commodities</Link>,
             },
             {
               key: "container-types",
-              icon: <DatabaseOutlined />,
+              icon: <ContainerOutlined />,
               label: <Link to="/container-types">Container Types</Link>,
             },
             {
               key: "bank-accounts",
-              icon: <DatabaseOutlined />,
+              icon: <BankOutlined />,
               label: <Link to="/bank-accounts">Bank Accounts</Link>,
             },
             {
               key: "tariffs",
-              icon: <DatabaseOutlined />,
+              icon: <FundOutlined />,
               label: <Link to="/tariffs">Tariffs</Link>,
             },
             {

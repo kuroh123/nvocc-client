@@ -393,7 +393,7 @@ const Ports = () => {
           <Col>
             <Space>
               <Avatar
-                icon={<DatabaseOutlined />}
+                icon={<GlobalOutlined />}
                 style={{ backgroundColor: "#722ed1" }}
                 size="large"
               />
