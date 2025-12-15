@@ -28,6 +28,7 @@ import Commodities from "./pages/Commodities";
 import ContainerTypes from "./pages/ContainerTypes";
 import BankAccounts from "./pages/BankAccounts";
 import Tariffs from "./pages/Tariffs";
+import CurrencyExchangeRates from "./pages/CurrencyExchangeRates";
 
 // Ant Design theme configuration
 const theme = {
@@ -176,6 +177,15 @@ function App() {
                   element={
                     <ProtectedRoute requirePermission="tariffs:read">
                       <Tariffs />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="currency-exchange-rates"
+                  element={
+                    <ProtectedRoute requirePermission="currency-exchange-rates:read">
+                      <CurrencyExchangeRates />
                     </ProtectedRoute>
                   }
                 />
