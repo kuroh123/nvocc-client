@@ -23,7 +23,7 @@ import {
   EyeOutlined,
   EditOutlined,
   DeleteOutlined,
-  ContainerOutlined,
+  RocketOutlined,
   GlobalOutlined,
   FilterOutlined,
   ReloadOutlined,
@@ -359,7 +359,7 @@ const Vessels = () => {
           <Col>
             <Space>
               <Avatar
-                icon={<ContainerOutlined />}
+                icon={<RocketOutlined />}
                 style={{ backgroundColor: "#1890ff" }}
                 size="large"
               />
@@ -394,7 +394,7 @@ const Vessels = () => {
             <Statistic
               title="Total Vessels"
               value={pagination.total}
-              prefix={<ContainerOutlined />}
+              prefix={<RocketOutlined />}
             />
           </Card>
         </Col>

@@ -23,7 +23,6 @@ import {
   EyeOutlined,
   EditOutlined,
   DeleteOutlined,
-  ScheduleOutlined,
   CalendarOutlined,
   FilterOutlined,
   ReloadOutlined,
@@ -463,7 +462,7 @@ const VesselSchedules = () => {
           <Col>
             <Space>
               <Avatar
-                icon={<ScheduleOutlined />}
+                icon={<CalendarOutlined />}
                 style={{ backgroundColor: "#13c2c2" }}
                 size="large"
               />
@@ -499,7 +498,7 @@ const VesselSchedules = () => {
             <Statistic
               title="Total Schedules"
               value={pagination.total}
-              prefix={<ScheduleOutlined />}
+              prefix={<CalendarOutlined />}
             />
           </Card>
         </Col>

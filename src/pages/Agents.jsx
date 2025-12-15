@@ -23,7 +23,7 @@ import {
   EyeOutlined,
   EditOutlined,
   DeleteOutlined,
-  UserOutlined,
+  ShopOutlined,
   GlobalOutlined,
   FilterOutlined,
   ReloadOutlined,
@@ -390,7 +390,7 @@ const Agents = () => {
           <Col>
             <Space>
               <Avatar
-                icon={<UserOutlined />}
+                icon={<ShopOutlined />}
                 style={{ backgroundColor: "#52c41a" }}
                 size="large"
               />
@@ -425,7 +425,7 @@ const Agents = () => {
             <Statistic
               title="Total Agents"
               value={pagination.total}
-              prefix={<UserOutlined />}
+              prefix={<ShopOutlined />}
             />
           </Card>
         </Col>
