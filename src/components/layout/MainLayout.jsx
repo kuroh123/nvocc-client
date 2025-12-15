@@ -156,6 +156,15 @@ const MainLayout = () => {
               icon: <DatabaseOutlined />,
               label: <Link to="/tariffs">Tariffs</Link>,
             },
+            {
+              key: "currency-exchange-rates",
+              icon: <SwapOutlined />,
+              label: (
+                <Link to="/currency-exchange-rates">
+                  Currency Exchange Rates
+                </Link>
+              ),
+            },
           ],
         },
         {
