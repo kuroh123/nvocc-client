@@ -374,11 +374,19 @@ const Tariffs = () => {
       ),
     },
     {
-      title: "Quantity",
-      dataIndex: "qty",
-      key: "qty",
-      sorter: true,
+      title: "Charge",
+      dataIndex: ["charge", "name"],
+      key: "charge",
+      render: (text, record) => (
+        <div>
+          <div>{record.charge?.name}</div>
+          <Text type="secondary" className="text-xs">
+            {record.containerType?.sacHsnCode}
+          </Text>
+        </div>
+      ),
     },
+
     {
       title: "Rate",
       dataIndex: "rate",

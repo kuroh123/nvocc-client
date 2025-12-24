@@ -65,8 +65,6 @@ const VesselForm = ({
               <Option value="TANKER">Tanker</Option>
               <Option value="RO_RO">RO-RO</Option>
               <Option value="GENERAL_CARGO">General Cargo</Option>
-              <Option value="PASSENGER">Passenger</Option>
-              <Option value="OTHER">Other</Option>
             </Select>
           </Form.Item>
         </Col>

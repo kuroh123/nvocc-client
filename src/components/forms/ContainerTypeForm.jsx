@@ -77,13 +77,11 @@ const ContainerTypeForm = ({
             ]}
           >
             <Select placeholder="Select container type">
-              <Option value="DRY_CONTAINER">Dry Container</Option>
-              <Option value="REEFER_CONTAINER">Reefer Container</Option>
-              <Option value="TANK_CONTAINER">Tank Container</Option>
+              <Option value="DRY">Dry Container</Option>
+              <Option value="REEFER">Reefer Container</Option>
+              <Option value="TANK">Tank Container</Option>
               <Option value="FLAT_RACK">Flat Rack</Option>
               <Option value="OPEN_TOP">Open Top</Option>
-              <Option value="BULK_CONTAINER">Bulk Container</Option>
-              <Option value="SPECIAL_CONTAINER">Special Container</Option>
             </Select>
           </Form.Item>
         </Col>

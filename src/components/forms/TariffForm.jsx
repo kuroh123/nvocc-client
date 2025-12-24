@@ -10,6 +10,7 @@ import {
   Col,
 } from "antd";
 import containerTypeService from "../../services/containerTypeService";
+import chargeService from "../../services/chargeService";
 import agentService from "../../services/agentService";
 import portService from "../../services/portService";
 import terminalService from "../../services/terminalService";
@@ -24,6 +25,7 @@ const TariffForm = ({
 }) => {
   const [form] = Form.useForm();
   const [containerTypes, setContainerTypes] = useState([]);
+  const [charges, setCharges] = useState([]);
   const [agents, setAgents] = useState([]);
   const [ports, setPorts] = useState([]);
   const [terminals, setTerminals] = useState([]);
@@ -36,6 +38,7 @@ const TariffForm = ({
 
   useEffect(() => {
     fetchContainerTypes();
+    fetchCharges();
     fetchAgents();
     fetchPorts();
     fetchTerminals();
@@ -65,6 +68,27 @@ const TariffForm = ({
       message.error("Failed to fetch container types");
     } finally {
       setLoading((prev) => ({ ...prev, containerTypes: false }));
+    }
+  };
+
+  const fetchCharges = async () => {
+    try {
+      setLoading((prev) => ({ ...prev, charges: true }));
+      const response = await chargeService.getAllCharges({
+        status: "ACTIVE",
+        limit: 1000,
+      });
+
+      if (response.success) {
+        setCharges(response.data || []);
+      } else {
+        message.error("Failed to fetch charges");
+      }
+    } catch (error) {
+      console.error("Error fetching charges:", error);
+      message.error("Failed to fetch charges");
+    } finally {
+      setLoading((prev) => ({ ...prev, charges: false }));
     }
   };
 
@@ -153,7 +177,7 @@ const TariffForm = ({
       onFinish={handleSubmit}
       initialValues={{
         eventType: "IMPORT",
-        productType: "CONTAINER",
+        productType: "NON_HAZ",
         qty: 1,
       }}
     >
@@ -167,12 +191,6 @@ const TariffForm = ({
             <Select placeholder="Select event type">
               <Option value="IMPORT">Import</Option>
               <Option value="EXPORT">Export</Option>
-              <Option value="HANDLING">Handling</Option>
-              <Option value="STORAGE">Storage</Option>
-              <Option value="TRANSPORT">Transport</Option>
-              <Option value="INSPECTION">Inspection</Option>
-              <Option value="DETENTION">Detention</Option>
-              <Option value="DEMURRAGE">Demurrage</Option>
             </Select>
           </Form.Item>
         </Col>
@@ -183,12 +201,8 @@ const TariffForm = ({
             rules={[{ required: true, message: "Please select product type" }]}
           >
             <Select placeholder="Select product type">
-              <Option value="CONTAINER">Container</Option>
-              <Option value="CARGO">Cargo</Option>
-              <Option value="VESSEL">Vessel</Option>
-              <Option value="SERVICE">Service</Option>
-              <Option value="DOCUMENTATION">Documentation</Option>
-              <Option value="EQUIPMENT">Equipment</Option>
+              <Option value="NON_HAZ">Non-Hazardous</Option>
+              <Option value="HAZ">Hazardous</Option>
             </Select>
           </Form.Item>
         </Col>
@@ -226,21 +240,48 @@ const TariffForm = ({
       </Row>
 
       <Row gutter={16}>
-        <Col span={24}>
+        <Col span={18}>
           <Form.Item
-            label="Quantity"
-            name="qty"
+            label="Charges"
+            name="chargeId"
+            rules={[{ required: true, message: "Please select Charge" }]}
+          >
+            <Select
+              placeholder="Select charge"
+              showSearch
+              loading={loading.charges}
+              filterOption={(input, option) => {
+                const charge = charges.find((c) => c.id === option.value);
+                if (!charge) return false;
+                const searchableText = `${charge.name} ${
+                  charge.sacHsnCode || ""
+                }`.toLowerCase();
+                return searchableText.indexOf(input.toLowerCase()) >= 0;
+              }}
+            >
+              {charges.map((charge) => (
+                <Option key={charge.id} value={charge.id}>
+                  {charge.name} ({charge.sacHsnCode})
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Col>
+        <Col span={6}>
+          <Form.Item
+            label="Rate"
+            name="rate"
             rules={[
-              { required: true, message: "Please enter quantity" },
+              { required: true, message: "Please enter rate" },
               {
                 type: "number",
                 min: 1,
-                message: "Quantity must be at least 1",
+                message: "Rate must not be 0",
               },
             ]}
           >
             <InputNumber
-              placeholder="Enter quantity"
+              placeholder="Enter rate"
               min={1}
               style={{ width: "100%" }}
             />

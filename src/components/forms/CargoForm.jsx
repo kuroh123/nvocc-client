@@ -61,12 +61,10 @@ const CargoForm = ({
           >
             <Select placeholder="Select cargo type">
               <Option value="GENERAL">General</Option>
-              <Option value="CONTAINER">Container</Option>
               <Option value="BULK">Bulk</Option>
               <Option value="LIQUID">Liquid</Option>
               <Option value="HAZARDOUS">Hazardous</Option>
               <Option value="REFRIGERATED">Refrigerated</Option>
-              <Option value="BREAKBULK">Break Bulk</Option>
             </Select>
           </Form.Item>
         </Col>
